@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Trash2, ShoppingBag } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import Link from "next/link"
 
 export default function CartPage() {
@@ -16,41 +16,42 @@ export default function CartPage() {
     setCartItems(cart)
   }, [])
 
-  const removeFromCart = (bookId: number) => {
-    const updatedCart = cartItems.filter((item) => item.id !== bookId)
-    setCartItems(updatedCart)
-    localStorage.setItem("cart", JSON.stringify(updatedCart))
-    window.dispatchEvent(new Event("storage"))
-    toast({
-      title: "Savatdan o'chirildi",
-      description: "Kitob savatdan o'chirildi",
+  const confirmRemoveFromCart = (bookId: number) => {
+    toast("Rostdan ham ushbu kitobni savatdan o‘chirmoqchimisiz?", {
+      action: {
+        label: "Ha, o‘chirish",
+        onClick: () => {
+          const updatedCart = cartItems.filter((item) => item.id !== bookId)
+          setCartItems(updatedCart)
+          localStorage.setItem("cart", JSON.stringify(updatedCart))
+          window.dispatchEvent(new Event("storage"))
+
+          toast.success("Kitob savatdan o'chirildi")
+        },
+      },
+      cancel: {
+        label: "Bekor qilish",
+        onClick: () => toast("Bekor qilindi"),
+      },
     })
   }
 
   const placeOrder = () => {
     if (cartItems.length === 0) {
-      toast({
-        title: "Savat bo'sh",
-        description: "Buyurtma berish uchun savatga kitob qo'shing",
-        variant: "destructive",
-      })
+      toast.error("Buyurtma berish uchun savatga kitob qo‘shing")
       return
     }
 
-    // Clear cart after order
     setCartItems([])
-    toast({
-      title: "Buyurtma berildi",
-      description: "Sizning buyurtmangiz muvaffaqiyatli qabul qilindi",
-    })
     localStorage.setItem("cart", JSON.stringify([]))
     window.dispatchEvent(new Event("storage"))
 
+    toast.success("Sizning buyurtmangiz muvaffaqiyatli qabul qilindi")
   }
 
   if (cartItems.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 mt-10">
         <div className="text-center animate-fade-in">
           <ShoppingBag className="h-24 w-24 mx-auto mb-4 text-muted-foreground" />
           <h1 className="text-3xl font-bold mb-4">Savat bo'sh</h1>
@@ -64,7 +65,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 mt-10">
       <h1 className="text-3xl font-bold mb-8 animate-fade-in">Savat</h1>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -93,7 +94,7 @@ export default function CartPage() {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => removeFromCart(book.id)}
+                    onClick={() => confirmRemoveFromCart(book.id)}
                     className="text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />

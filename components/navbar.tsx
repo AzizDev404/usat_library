@@ -1,84 +1,159 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
-import { ShoppingCart, User, LogIn } from "lucide-react"
+import { ShoppingCart, User, LogIn, LogOut, Book, BookAIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import DarkLogo from "/public/logo-dark.png"
 import LightLogo from "/public/logo-icon.png"
-import Image from "next/image"
+import { useAuthStore } from "@/lib/store/auth"
+import { toast } from "sonner"
+import { usePathname } from "next/navigation"
+import { useRouter } from "next/router"
+
 export default function Navbar() {
-  const [userId, setUserId] = useState<string | null>(null)
+  const { userId } = useAuthStore()
   const [cartCount, setCartCount] = useState(0)
-  const [theme, setTheme] = useState<"light" | "dark" | null>(null)
-
+  const [mounted, setMounted] = useState(false)
+  const pathname = usePathname();
   useEffect(() => {
-    // Check localStorage for userId
-    const storedUserId =  localStorage.getItem("userId")  
-    setUserId(storedUserId)
-
-    // Get cart count
+    setMounted(true)
     const cart = JSON.parse(localStorage.getItem("cart") || "[]")
     setCartCount(cart.length)
 
-    // Listen for cart updates
     const handleStorageChange = () => {
       const updatedCart = JSON.parse(localStorage.getItem("cart") || "[]")
       setCartCount(updatedCart.length)
     }
-    
+
     window.addEventListener("storage", handleStorageChange)
     return () => window.removeEventListener("storage", handleStorageChange)
   }, [])
-  useEffect(() => {
-  const storedTheme = localStorage.getItem("theme") as "light" | "dark"
-  setTheme(storedTheme)
-}, [])
+   if (pathname === "/login") return <></>;
+
+  if (!mounted) return null
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center space-x-2">
-          <div className="w-[200px]">
-            <Image src={LightLogo} alt="Logo" className="w-full"/>
+    <>
+      {/* Upper Navbar */}
+      <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between px-4">
+          <Link href="/" className="flex items-center space-x-2 max-md:justify-center">
+            <div className="w-[200px] max-md:w-1/3 max-md:flex max-md:justify-center">
+              <Image src={LightLogo} alt="Logo" className="w-full" />
+            </div>
+          </Link>
+
+          {/* Large screen buttons */}
+          <div className="hidden md:flex items-center space-x-4">
+            <ModeToggle />
+            {userId ? (
+              <>
+                <Link href="/profile">
+                  <Button variant="outline" size="sm" className="bg-transparent animate-scale-in">
+                    <User className="h-4 w-4 mr-2" />
+                    Profil
+                  </Button>
+                </Link>
+                <Link href="/cart">
+                  <Button variant="outline" size="sm" className="relative bg-transparent animate-scale-in">
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Savat
+                    {cartCount > 0 && (
+                      <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex justify-center items-center primary-gradient">
+                        {cartCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <Link href="/login">
+                <Button size="sm" className="primary-gradient animate-scale-in">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Kirish
+                </Button>
+              </Link>
+            )}
           </div>
+        </div>
+      </nav>
+
+{/*  mobile holat */ }
+   <div className="fixed bottom-0 z-50 w-full bg-background border-t md:hidden flex items-center h-16 px-2">
+        <Link href="/" className="flex-1 px-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
+          >
+            <BookAIcon/>
+            <span className="text-sm font-semibold">Kitoblar</span>
+          </Button>
         </Link>
 
-        <div className="flex items-center space-x-4">
-          <ModeToggle />
+        <Link href="/cart" className="flex-1 px-1 relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            <span>Savat</span>
+          </Button>
+          {cartCount > 0 && (
+            <Badge className="absolute top-1 right-2 h-5 w-5 p-0 text-xs flex justify-center items-center primary-gradient">
+              {cartCount}
+            </Badge>
+          )}
+        </Link>
 
-          {userId ? (
-            <>
-              <Link href="/profile">
-                <Button variant="outline" size="sm" className="animate-scale-in bg-transparent">
-                  <User className="h-4 w-4 mr-2" />
-                  Profil
-                </Button>
-              </Link>
-              <Link href="/cart">
-                <Button variant="outline" size="sm" className="relative animate-scale-in bg-transparent">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Savat
-                  {cartCount > 0 && (
-                    <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs flex justify-center items-center primary-gradient">
-                      {cartCount}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
-            </>
-          ) : (
-            <Link href="/login">
-              <Button size="sm" className="primary-gradient animate-scale-in">
-                <LogIn className="h-4 w-4 mr-2" />
-                Kirish
+        {userId ? (
+          <>
+            <Link href="/profile" className="flex-1 px-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
+              >
+                <User className="h-5 w-5" />
+                <span>Profil</span>
               </Button>
             </Link>
-          )}
-        </div>
+            <div className="flex-1 px-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="flex flex-col w-full items-center justify-center text-xs text-red-500 hover:bg-red-50 transition"
+                onClick={() => {
+                  localStorage.removeItem("userId")
+                  localStorage.removeItem("cart")
+                  toast.success("Tizimdan chiqildi", {
+                    position: "top-center",
+                  })
+                  window.location.href = "/login"
+                }}
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Chiqish</span>
+              </Button>
+            </div>
+          </>
+        ) : (
+          <Link href="/login" className="flex-1 px-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
+            >
+              <span>Kirish</span>
+            </Button>
+          </Link>
+        )}
       </div>
-    </nav>
+
+    </>
   )
 }

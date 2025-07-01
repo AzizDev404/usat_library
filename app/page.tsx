@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, ShoppingCart, Eye } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 // Mock data
 const mockBooks = [
@@ -100,44 +102,42 @@ const topics = [
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedDirections, setSelectedDirections] = useState<string[]>([])
-  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([])
-  const [selectedTopics, setSelectedTopics] = useState<string[]>([])
+  const [selectedDirection, setSelectedDirection] = useState("Barcha yo'nalishlar")
+  const [selectedDepartment, setSelectedDepartment] = useState("Barcha kafedralar")
+  const [selectedTopic, setSelectedTopic] = useState("Barcha mavzular")
   const [visibleBooks, setVisibleBooks] = useState(40)
   const [filteredBooks, setFilteredBooks] = useState(mockBooks)
-  const [theme, setTheme] = useState<"light" | "dark" | null>(null)
 
   useEffect(() => {
     const filtered = mockBooks.filter((book) => {
       const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesDirection = selectedDirections.length === 0 || selectedDirections.includes(book.direction)
-      const matchesDepartment = selectedDepartments.length === 0 || selectedDepartments.includes(book.department)
-      const matchesTopic = selectedTopics.length === 0 || selectedTopics.includes(book.topic)
+      const matchesDirection = selectedDirection === "Barcha yo'nalishlar" || book.direction === selectedDirection
+      const matchesDepartment = selectedDepartment === "Barcha kafedralar" || book.department === selectedDepartment
+      const matchesTopic = selectedTopic === "Barcha mavzular" || book.topic === selectedTopic
 
       return matchesSearch && matchesDirection && matchesDepartment && matchesTopic
     })
-
     setFilteredBooks(filtered)
-  }, [searchTerm, selectedDirections, selectedDepartments, selectedTopics])
+  }, [searchTerm, selectedDirection, selectedDepartment, selectedTopic])
 
-  const addToCart = (book: any) => {
+  const addToCart = (book: any, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click when button is clicked
     const cart = JSON.parse(localStorage.getItem("cart") || "[]")
     const existingBook = cart.find((item: any) => item.id === book.id)
 
     if (!existingBook) {
       cart.push(book)
       localStorage.setItem("cart", JSON.stringify(cart))
-      toast({
-        title: "Savatga qo'shildi",
-        description: `${book.title} savatga qo'shildi`,
+      toast.success(`${book.title} savatga qo'shildi`, {
+        description: "Buyurtmani profil sahifasida rasmiylashing",
+        position: "top-center",
+        duration: 3000,
       })
-      // Trigger storage event for navbar update
       window.dispatchEvent(new Event("storage"))
     } else {
-      toast({
-        title: "Kitob allaqachon savatda",
-        description: `${book.title} allaqachon savatda mavjud`,
-        variant: "destructive",
+      toast.error(`${book.title} allaqachon savatda mavjud`, {
+        position: "top-center",
+        duration: 2500,
       })
     }
   }
@@ -145,170 +145,170 @@ export default function HomePage() {
   const showMoreBooks = () => {
     setVisibleBooks((prev) => prev + 40)
   }
-useEffect(() => {
-  const storedTheme = localStorage.getItem("theme") as "light" | "dark"
-  setTheme(storedTheme)
-}, [])
+
+  const clearFilters = () => {
+    setSelectedDirection("Barcha yo'nalishlar")
+    setSelectedDepartment("Barcha kafedralar")
+    setSelectedTopic("Barcha mavzular")
+  }
+
+  const hasActiveFilters =
+    selectedDirection !== "Barcha yo'nalishlar" ||
+    selectedDepartment !== "Barcha kafedralar" ||
+    selectedTopic !== "Barcha mavzular"
+    const online = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click when button is clicked
+    toast.warning("Online Kitob o'qish da hali sozlashlar ketmoqda")
+  }
+  const router = useRouter()
+  const handleCardClick = (bookId: number) => {
+    router.push(`/book/${bookId}`)
+  }
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background mt-10">
       {/* Hero Section */}
-      <div className="text-center mb-12 animate-fade-in">
-        <h1 className={`text-4xl md:text-6xl font-bold mb-4  text-[#ffc82a]`}>
-          USAT Kutubxonasi
-        </h1>
-        <p className="text-lg text-muted-foreground">Universitet kutubxonasidan kitoblarni qidiring va o'qing</p>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 text-[#ffc82a]">USAT Kutubxonasi</h1>
+          <p className="text-lg text-muted-foreground">Universitet kutubxonasidan kitoblarni qidiring va o'qing</p>
+        </div>
       </div>
 
-      {/* Search Section */}
-      <div className="mb-8 animate-slide-up">
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Kitoblarni qidirish..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-12 text-lg"
-          />
+      {/* Sticky Search and Filters */}
+      <div className="sticky top-[65px] z-50 bg-background/95 backdrop-blur-sm border-b shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          {/* Search Section */}
+          <div className="mb-4 w-full">
+            <div className="relative mx-auto">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Kitoblarni qidirish..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-12 text-xs w-full"
+              />
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="grid grid-cols-3 md:grid-cols-3 gap-4 mb-4">
+            {/* Directions Filter */}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-sm">Yo'nalishlar</h3>
+              <Select value={selectedDirection} onValueChange={setSelectedDirection}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Yo'nalishni tanlang" />
+                </SelectTrigger>
+                <SelectContent>
+                  {directions.map((direction) => (
+                    <SelectItem key={direction} value={direction}>
+                      {direction}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Departments Filter */}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-sm">Kafedralar</h3>
+              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Kafedrani tanlang" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments.map((department) => (
+                    <SelectItem key={department} value={department}>
+                      {department}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Topics Filter */}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-sm">Mavzular</h3>
+              <Select value={selectedTopic} onValueChange={setSelectedTopic}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Mavzuni tanlang" />
+                </SelectTrigger>
+                <SelectContent>
+                  {topics.map((topic) => (
+                    <SelectItem key={topic} value={topic}>
+                      {topic}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Clear Filters Button */}
+          {hasActiveFilters && (
+            <div className="flex justify-center">
+              <Button variant="outline" onClick={clearFilters} size="sm">
+                Barcha filtrlarni tozalash
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Books Grid */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+          {filteredBooks.slice(0, visibleBooks).map((book, index) => (
+            <Card key={book.id} onClick={()=>handleCardClick(book.id)} className="group hover:shadow-xl transition-all duration-200 border rounded-xl">
+              <CardContent className="p-4">
+                <div className="mb-4 overflow-hidden rounded-lg">
+                  <Image
+                    src={book.cover || "/placeholder.svg"}
+                    alt={book.title}
+                    width={150}
+                    height={200}
+                    className="w-full h-48 object-cover"
+                  />
+                </div>
+                <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                  {book.title}
+                </h3>
+                <div className="space-y-1 text-sm text-muted-foreground mb-4">
+                  <p>{book.pages} bet</p>
+                  <p>{book.year}-yil</p>
+                  <Badge variant="secondary" className="text-xs">
+                    {book.topic}
+                  </Badge>
+                </div>
+              </CardContent>
+              <CardFooter className="p-4 pt-0 flex flex-col gap-2">
+                <Button
+                  variant="outline"
+                  onClick={(e) => online(e)}
+                  className="w-full hover:bg-muted transition-all bg-transparent"
+                >
+                  <Eye className="h-4 w-4 mr-2" /> Onlayn o'qish
+                </Button>
+                <Button
+                  className="w-full bg-[#ffc82a] hover:bg-[#ffc82a]/90 text-black"
+                  onClick={(e) => addToCart(book, e)}
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" /> Savatga qo'shish
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
         </div>
 
-        {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Directions Filter */}
-          <div className="space-y-3">
-            <h3 className="font-semibold text-lg">Yo'nalishlar</h3>
-            <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-              {directions.slice(1).map((direction) => (
-                <label
-                  key={direction}
-                  className="flex items-center space-x-2 cursor-pointer hover:bg-accent rounded p-1"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedDirections.includes(direction)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedDirections([...selectedDirections, direction])
-                      } else {
-                        setSelectedDirections(selectedDirections.filter((d) => d !== direction))
-                      }
-                    }}
-                    className="rounded border-gray-300 text-primary focus:ring-primary"
-                  />
-                  <span className="text-sm">{direction}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Departments Filter */}
-          <div className="space-y-3">
-            <h3 className="font-semibold text-lg">Kafedralar</h3>
-            <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-              {departments.slice(1).map((department) => (
-                <label
-                  key={department}
-                  className="flex items-center space-x-2 cursor-pointer hover:bg-accent rounded p-1"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedDepartments.includes(department)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedDepartments([...selectedDepartments, department])
-                      } else {
-                        setSelectedDepartments(selectedDepartments.filter((d) => d !== department))
-                      }
-                    }}
-                    className="rounded border-gray-300 text-primary focus:ring-primary"
-                  />
-                  <span className="text-sm">{department}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Topics Filter */}
-          <div className="space-y-3">
-            <h3 className="font-semibold text-lg">Mavzular</h3>
-            <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-              {topics.slice(1).map((topic) => (
-                <label key={topic} className="flex items-center space-x-2 cursor-pointer hover:bg-accent rounded p-1">
-                  <input
-                    type="checkbox"
-                    checked={selectedTopics.includes(topic)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedTopics([...selectedTopics, topic])
-                      } else {
-                        setSelectedTopics(selectedTopics.filter((t) => t !== topic))
-                      }
-                    }}
-                    className="rounded border-gray-300 text-primary focus:ring-primary"
-                  />
-                  <span className="text-sm">{topic}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Clear Filters Button */}
-        {(selectedDirections.length > 0 || selectedDepartments.length > 0 || selectedTopics.length > 0) && (
-          <div className="mb-6 flex justify-center">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSelectedDirections([])
-                setSelectedDepartments([])
-                setSelectedTopics([])
-              }}
-              className="bg-transparent"
-            >
-              Barcha filtrlarni tozalash
+        {/* Show More Button */}
+        {visibleBooks < filteredBooks.length && (
+          <div className="text-center">
+            <Button onClick={showMoreBooks} size="lg" className="bg-[#ffc82a] hover:bg-[#ffc82a]/90 text-black">
+              Ko'proq ko'rsatish
             </Button>
           </div>
         )}
       </div>
-
-      {/* Books Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 mb-8">
-        {filteredBooks.slice(0, visibleBooks).map((book, index) => (
-          <Card key={book.id} className="book-card animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
-            <CardContent className="p-4">
-              <div className="aspect-[3/4] mb-4 overflow-hidden rounded-lg">
-                <Image src={book.cover || "/placeholder.svg"} alt={book.title} width={150} height={200}  className="w-full h-full object-cover" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2 line-clamp-2">{book.title}</h3>
-              <div className="space-y-1 text-sm text-muted-foreground mb-4">
-                <p>{book.pages} bet</p>
-                <p>{book.year}-yil</p>
-                <Badge variant="secondary" className="text-xs">
-                  {book.topic}
-                </Badge>
-              </div>
-            </CardContent>
-            <CardFooter className="p-4 pt-0  flex justify-center items-center gap-2 max-md:flex-col max-lg:flex-col max-xl:flex-col">
-              <Button variant="outline" className="w-full bg-transparent">
-                <Eye className="h-4" />
-                Onlayn o'qish
-              </Button>
-              <Button className="w-full primary-gradient" onClick={() => addToCart(book)}>
-                <ShoppingCart className="h-4 " />
-                Savatga qo'shish
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-
-      {/* Show More Button */}
-      {visibleBooks < filteredBooks.length && (
-        <div className="text-center">
-          <Button onClick={showMoreBooks} size="lg" className="primary-gradient animate-scale-in">
-            Ko'proq ko'rsatish
-          </Button>
-        </div>
-      )}
     </div>
   )
 }
