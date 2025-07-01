@@ -175,7 +175,7 @@ export default function HomePage() {
       </div>
 
       {/* Sticky Search and Filters */}
-      <div className="sticky top-[65px] z-50 bg-background/95 backdrop-blur-sm border-b shadow-sm">
+      <div className="sticky top-[65px] z-50 dark:bg-[#020817] bg-white  border-b shadow-sm">
         <div className="container mx-auto px-4 py-4">
           {/* Search Section */}
           <div className="mb-4 w-full">
