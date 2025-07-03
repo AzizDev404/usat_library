@@ -4,10 +4,10 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { ModeToggle } from "@/components/mode-toggle"
 import { ShoppingCart, User, LogIn, LogOut, Book, BookAIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import LightLogo from "/public/logo-icon.png"
+import DarkLogo from "/public/logo-dark.png"
 import { useAuthStore } from "@/lib/store/auth"
 import { toast } from "sonner"
 import { usePathname } from "next/navigation"
@@ -42,13 +42,12 @@ export default function Navbar() {
         <div className="container flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex items-center space-x-2 max-md:justify-center">
             <div className="w-[200px] max-md:w-1/3 max-md:flex max-md:justify-center">
-              <Image src={LightLogo} alt="Logo" className="w-full" />
+              <Image src={DarkLogo} alt="Logo" className="w-full" />
             </div>
           </Link>
 
           {/* Large screen buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <ModeToggle />
             {userId ? (
               <>
                 <Link href="/profile">
