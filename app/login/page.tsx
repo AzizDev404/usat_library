@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +19,13 @@ export default function LoginPage() {
   const [isDark, setIsDark] = useState(false)
   const { setUserId } = useAuthStore()
   const router = useRouter()
+const [isClient, setIsClient] = useState(false);
 
+  useEffect(() => {
+    setIsClient(true); // Clientda ekanligingizni aniqlash
+  }, []);
+
+  if (!isClient) return null; 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     if (!passport || !password) {

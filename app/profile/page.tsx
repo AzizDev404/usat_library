@@ -87,6 +87,8 @@ export default function ProfilePage() {
   ])
 
   const router = useRouter()
+const [isClient, setIsClient] = useState(false);
+
 
   useEffect(() => {
     const userId = localStorage.getItem("userId")
@@ -107,6 +109,11 @@ export default function ProfilePage() {
     router.push("/login")
   }
 
+    useEffect(() => {
+    setIsClient(true); // Clientda ekanligingizni aniqlash
+  }, []);
+
+  if (!isClient) return null; 
   const confirmLogout = () => {
     toast.custom((t) => (
       <div className="bg-white dark:bg-zinc-900 shadow-xl rounded-lg border border-[#1c2433]/20 p-6 w-[340px] animate-in fade-in zoom-in flex flex-col gap-4">
@@ -360,6 +367,7 @@ export default function ProfilePage() {
                   </Label>
                   <Input
                     id="direction"
+                    disabled
                     value={profile.direction}
                     onChange={(e) => setProfile({ ...profile, direction: e.target.value })}
                     className="border-[#1c2433]/20 focus:border-[#1c2433] focus:ring-[#1c2433]/20"
@@ -371,6 +379,7 @@ export default function ProfilePage() {
                   </Label>
                   <Input
                     id="group"
+                    disabled
                     value={profile.group}
                     onChange={(e) => setProfile({ ...profile, group: e.target.value })}
                     className="border-[#1c2433]/20 focus:border-[#1c2433] focus:ring-[#1c2433]/20"

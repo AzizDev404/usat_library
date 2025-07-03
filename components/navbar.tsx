@@ -18,7 +18,13 @@ export default function Navbar() {
   const [cartCount, setCartCount] = useState(0)
   const [mounted, setMounted] = useState(false)
   const pathname = usePathname();
+  const [isClient, setIsClient] = useState(false);
+
+ 
+
+
   useEffect(() => {
+    setIsClient(true);
     setMounted(true)
     const cart = JSON.parse(localStorage.getItem("cart") || "[]")
     setCartCount(cart.length)
@@ -34,14 +40,15 @@ export default function Navbar() {
    if (pathname === "/login") return <></>;
 
   if (!mounted) return null
+  if (!isClient) return null; 
 
   return (
     <>
       {/* Upper Navbar */}
-      <nav className="sticky top-0 z-50 w-full border-b bg-background">
+      <nav className="sticky top-0 z-50 w-full border-b bg-background py-5">
         <div className="container flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex items-center space-x-2 max-md:justify-center">
-            <div className="w-[200px] max-md:w-1/3 max-md:flex max-md:justify-center">
+            <div className="w-[250px] max-md:w-2/3 max-md:flex max-md:justify-center">
               <Image src={DarkLogo} alt="Logo" className="w-full" />
             </div>
           </Link>
@@ -51,13 +58,13 @@ export default function Navbar() {
             {userId ? (
               <>
                 <Link href="/profile">
-                  <Button variant="outline" size="sm" className="bg-transparent animate-scale-in">
+                  <Button variant="outline" size="sm" className="bg-transparent px-8 py-6 animate-scale-in">
                     <User className="h-4 w-4 mr-2" />
                     Profil
                   </Button>
                 </Link>
                 <Link href="/cart">
-                  <Button variant="outline" size="sm" className="relative bg-transparent animate-scale-in">
+                  <Button variant="outline" size="sm" className="relative bg-transparent px-8 py-6 animate-scale-in">
                     <ShoppingCart className="h-4 w-4 mr-2" />
                     Savat
                     {cartCount > 0 && (

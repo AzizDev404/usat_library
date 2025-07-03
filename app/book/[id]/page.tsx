@@ -31,7 +31,9 @@ export default function BookDetailPage() {
   const [startX, setStartX] = useState(0)
   const [currentX, setCurrentX] = useState(0)
   const swiperRef = useRef<HTMLDivElement>(null)
+const [isClient, setIsClient] = useState(false);
 
+  
   const mockBooks = [
     {
       id: 1,
@@ -250,6 +252,12 @@ export default function BookDetailPage() {
   const handleBookClick = (bookId: number) => {
     router.push(`/book/${bookId}`)
   }
+  
+ useEffect(() => {
+    setIsClient(true); // Clientda ekanligingizni aniqlash
+  }, []);
+
+  if (!isClient) return null; 
 
   if (!book) {
     return (
@@ -263,6 +271,7 @@ export default function BookDetailPage() {
       </div>
     )
   }
+ 
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -10,6 +10,7 @@ import Link from "next/link"
 
 export default function CartPage() {
   const [cartItems, setCartItems] = useState<any[]>([])
+const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     const cart = JSON.parse(localStorage.getItem("cart") || "[]")
@@ -49,6 +50,12 @@ export default function CartPage() {
     toast.success("Sizning buyurtmangiz muvaffaqiyatli qabul qilindi")
   }
 
+  useEffect(() => {
+    setIsClient(true); // Clientda ekanligingizni aniqlash
+  }, []);
+
+  if (!isClient) return null; 
+  
   if (cartItems.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8 mt-10">

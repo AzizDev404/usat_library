@@ -121,6 +121,7 @@ export default function HomePage() {
   const [startX, setStartX] = useState(0)
   const [currentX, setCurrentX] = useState(0)
   const swiperRef = useRef<HTMLDivElement>(null)
+const [isClient, setIsClient] = useState(false);
 
   // Get new books for swiper
   const newBooks = mockBooks.filter((book) => book.isNew).slice(0, 8)
@@ -148,35 +149,54 @@ export default function HomePage() {
     }
   }, [slidesCount, isDragging])
 
-  // Touch/Mouse handlers for swiper
-  const handleStart = (clientX: number) => {
-    setIsDragging(true)
-    setStartX(clientX)
-    setCurrentX(clientX)
+
+  useEffect(() => {
+    setIsClient(true); // Clientda ekanligingizni aniqlash
+  }, []);
+
+  if (!isClient) return null; 
+  
+ // Touch/Mouse handlers for swiper - bu qismni almashtiring
+const handleStart = (clientX: number) => {
+  setIsDragging(true)
+  setStartX(clientX)
+  setCurrentX(clientX)
+}
+
+const handleMove = (clientX: number) => {
+  if (!isDragging) return
+  setCurrentX(clientX)
+  
+  // Real-time drag effect qo'shish
+  if (swiperRef.current) {
+    const diff = startX - clientX
+    const dragOffset = (diff / window.innerWidth) * 100
+    swiperRef.current.style.transform = `translateX(-${currentSlide * 100 + dragOffset}%)`
   }
+}
 
-  const handleMove = (clientX: number) => {
-    if (!isDragging) return
-    setCurrentX(clientX)
-  }
-
-  const handleEnd = () => {
-    if (!isDragging) return
-    setIsDragging(false)
-
-    const diff = startX - currentX
-    const threshold = 50
-
-    if (Math.abs(diff) > threshold) {
-      if (diff > 0) {
-        // Swipe left - next slide
-        setCurrentSlide((prev) => (prev + 1) % slidesCount)
-      } else {
-        // Swipe right - previous slide
-        setCurrentSlide((prev) => (prev - 1 + slidesCount) % slidesCount)
-      }
+const handleEnd = () => {
+  if (!isDragging) return
+  setIsDragging(false)
+  
+  const diff = startX - currentX
+  const threshold = 30 // 50 dan 30 ga kamaytirdim - osonroq bo'ladi
+  
+  if (Math.abs(diff) > threshold) {
+    if (diff > 0) {
+      // Swipe left - next slide
+      setCurrentSlide((prev) => (prev + 1) % slidesCount)
+    } else {
+      // Swipe right - previous slide  
+      setCurrentSlide((prev) => (prev - 1 + slidesCount) % slidesCount)
     }
   }
+  
+  // Reset transform
+  if (swiperRef.current) {
+    swiperRef.current.style.transform = `translateX(-${currentSlide * 100}%)`
+  }
+}
 
   const addToCart = (book: any, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -232,7 +252,16 @@ export default function HomePage() {
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + slidesCount) % slidesCount)
   }
+ const isTokenyes = (callback: () => void) => {
+  const token = localStorage.getItem('userId')
 
+  if (!token) {
+    toast.warning('Siz hali Kirishni bajarmadingiz')
+    router.push('/login')
+  } else {
+    callback()
+  }
+}
   return (
     <div className="min-h-screen bg-background mt-10">
       {/* New Books Swiper - Full Screen */}
@@ -246,7 +275,7 @@ export default function HomePage() {
               variant="outline"
               size="icon"
               onClick={prevSlide}
-              className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-[#1c2433]/80 border-[#1c2433]/20 text-white hover:bg-[#1c2433] hover:text-white w-screen h-full rounded-r-lg backdrop-blur-sm justify-start pl-8"
+              className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-[#1c2433]/80 border-[#1c2433]/20 text-white hover:bg-[#1c2433] hover:text-white w-12 h-12 rounded-lg backdrop-blur-sm justify-center"
               style={{ maxWidth: "80px" }}
             >
               <ChevronLeft className="h-8 w-8" />
@@ -255,7 +284,7 @@ export default function HomePage() {
               variant="outline"
               size="icon"
               onClick={nextSlide}
-              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-[#1c2433]/80 border-[#1c2433]/20 text-white  hover:text-white hover:bg-[#1c2433] w-screen h-full rounded-l-lg backdrop-blur-sm justify-end pr-8"
+              className="hidden md:flex absolute right-4 top-1/2 text-center -translate-y-1/2 z-20 bg-[#1c2433]/80 border-[#1c2433]/20 text-white  hover:text-white hover:bg-[#1c2433] w-12 h-12  rounded-lg  backdrop-blur-sm justify-center items-center"
               style={{ maxWidth: "80px" }}
             >
               <ChevronRight className="h-8 w-8" />
@@ -266,10 +295,10 @@ export default function HomePage() {
               <div
                 ref={swiperRef}
                 className="flex transition-transform duration-1000 ease-in-out cursor-grab active:cursor-grabbing w- h-full"
-                style={{
-                  transform: `translateX(-${currentSlide * 100}%)`,
-                  ...(isDragging && { transitionDuration: "0ms" }),
-                }}
+               style={{
+  transform: `translateX(-${currentSlide * 100}%)`,
+  ...(isDragging && { transitionDuration: "0ms" }),
+}}
                 onMouseDown={(e) => handleStart(e.clientX)}
                 onMouseMove={(e) => handleMove(e.clientX)}
                 onMouseUp={handleEnd}
@@ -383,7 +412,7 @@ export default function HomePage() {
       </div>
 
       {/* Sticky Search and Filters */}
-      <div className="sticky top-[65px] z-50 dark:bg-[#020817] bg-white border-b shadow-sm">
+      <div className="sticky top-[105px] z-50 dark:bg-[#020817] bg-white border-b shadow-sm">
         <div className="container mx-auto px-4 py-4">
           {/* Search Section */}
           <div className="mb-4 w-full">
@@ -467,7 +496,7 @@ export default function HomePage() {
           {filteredBooks.slice(0, visibleBooks).map((book, index) => (
             <Card
               key={book.id}
-              onClick={() => handleCardClick(book.id)}
+              onClick={() => isTokenyes(() => handleCardClick(book.id))}
               className="group hover:shadow-xl transition-all duration-200 border rounded-xl cursor-pointer hover:border-[#1c2433]/20"
             >
               <CardContent className="p-4">
@@ -504,7 +533,7 @@ export default function HomePage() {
                 </Button>
                 <Button
                   className="w-full bg-[#1c2433] hover:bg-[#1c2433]/90 text-white"
-                  onClick={(e) => addToCart(book, e)}
+                  onClick={(e) => isTokenyes(()=> addToCart(book, e))}
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" /> Savatga qo'shish
                 </Button>
