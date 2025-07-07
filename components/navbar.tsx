@@ -250,9 +250,10 @@ export default function Navbar() {
               </>
             ) : (
               <Link href="/login">
-                <Button
+                 <Button
                   size="sm"
-                  className="primary-gradient animate-scale-in"
+                  variant="outline"
+                    className="relative !bg-[#21466D] hover:!bg-[white] hover:text-[#21466D] px-8 py-6 animate-scale-in text-white bg-transparent"
                   style={{ border: "1px solid #21466D", backgroundColor: "transparent" }}
                 >
                   <LogIn className="h-4 w-4 mr-2" />
