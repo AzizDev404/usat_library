@@ -1,9 +1,10 @@
 import Image from "next/image"
 import Link from "next/link"
 import DarkLogo from "/public/logo-icon.png"
+import { Info, Locate, LocateFixed, LocateIcon, LocateOffIcon, Map, PhoneCall } from "lucide-react"
 export default function Footer() {
   return (
-    <footer className="bg-[#1a1a1a] text-white py-10 mt-16 max-md:mb-10 max-md:mt-2">
+    <footer className="bg-[#21466D] text-white py-10 mt-16 max-md:mb-10 max-md:mt-2">
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 ">
         {/* Logo va nom */}
         <Link href="/" className="flex items-center space-x-2 max-md:w-full max-md:justify-start">
@@ -27,9 +28,9 @@ export default function Footer() {
   {/* Matn qismi */}
   <div className="flex-1 flex flex-col gap-3">
     <h3 className="text-lg font-semibold">Kontakt</h3>
-    <p className="text-sm text-gray-400">📍 USAT Universiteti, Toshkent, O'zbekiston</p>
-    <p className="text-sm text-gray-400">📞 +998 (90) 123-45-67</p>
-    <p className="text-sm text-gray-400">✉️ info@usat.uz</p>
+    <p className="text-sm text-white flex justify-start items-center gap-3"><Map/>USAT Universiteti, Toshkent, O'zbekiston</p>
+    <p className="text-sm text-white flex justify-start items-center gap-3"><PhoneCall/>+998 (90) 123-45-67</p>
+    <p className="text-sm text-white flex justify-start items-center gap-3"><Info/>info@usat.uz</p>
   </div>
 
   {/* Xarita qismi */}
@@ -49,7 +50,7 @@ export default function Footer() {
     ></iframe>
   </div>
       {/* Pastki chiziq */}
-      <div className="mt-10 text-center text-sm text-gray-500 border-t border-gray-700 pt-4">
+      <div className="mt-10 text-center text-sm text-white border-t border-yellow-400 pt-4">
         © {new Date().getFullYear()} USAT Kutubxonasi. Barcha huquqlar himoyalangan.
       </div>
     </footer>
