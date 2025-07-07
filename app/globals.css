@@ -2,9 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+
+
 :root {
   --primary: #ffc82a;
-  --primary-dark: #1c2433;
+  --primary-dark: #21466D;
   --background: 0 0% 100%;
   --filter:  0 0% 100%;
   --foreground: 222.2 84% 4.9%;
@@ -119,3 +121,5 @@ body {
 .dark-gradient {
   background: linear-gradient(135deg, #1c2433 0%, #2d3748 100%);
 }
+
+

@@ -59,7 +59,7 @@ const [isClient, setIsClient] = useState(false);
                 
 
                 <CardTitle className="flex items-center justify-center gap-2 text-2xl text-gray-800 dark:text-gray-100">
-                  <LogIn className="h-6 w-6 text-[#1c2433]" />
+                  <LogIn className="h-6 w-6 text-[#21466D]" />
                   Tizimga kirish
                 </CardTitle>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
@@ -78,7 +78,7 @@ const [isClient, setIsClient] = useState(false);
                       value={passport}
                       onChange={(e) => setPassport(e.target.value)}
                       placeholder="AB1234569"
-                      className="h-12 border-[#1c2433] dark:border-gray-600 focus:border-[#1c2433] focus:ring-[#ffc82a]/20 bg-white/80 dark:bg-gray-700/80 dark:text-gray-100"
+                      className="h-12 border-[#21466D] dark:border-gray-600 focus:border-[#21466D] focus:ring-[#ffc82a]/20 bg-white/80 dark:bg-gray-700/80 dark:text-gray-100"
                     />
                   </div>
 
@@ -92,13 +92,13 @@ const [isClient, setIsClient] = useState(false);
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Parolingizni kiriting"
-                      className="h-12 border-[#1c2433] dark:border-gray-600 focus:border-[#1c2433] focus:ring-[#1c2433]/20 bg-white/80 dark:bg-gray-700/80 dark:text-gray-100"
+                      className="h-12 border-[#21466D] dark:border-gray-600 focus:border-[#21466D] focus:ring-[#21466D]/20 bg-white/80 dark:bg-gray-700/80 dark:text-gray-100"
                     />
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full h-12 bg-[#1c2433] hover:bg-[#212c3f] text-[white] font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                    className="w-full h-12 bg-[#21466D] hover:bg-[#212c3f] text-[white] font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
                   >
                     <LogIn className="h-4 w-4 mr-2" />
                     Kirish
@@ -107,7 +107,7 @@ const [isClient, setIsClient] = useState(false);
 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-[#1c2433] dark:border-gray-600"></div>
+                    <div className="w-full border-t border-[#21466D] dark:border-gray-600"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
                     <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
@@ -122,7 +122,7 @@ const [isClient, setIsClient] = useState(false);
                   </p>
                   <Button
                     variant="outline"
-                    className="w-full border-[#1c2433] text-[#1c2433] hover:bg-[#1c2433] hover:text-[white] dark:border-[#ffc82a] dark:text-[#ffc82a] dark:hover:bg-[#ffc82a] dark:hover:text-black transition-all duration-200 bg-transparent"
+                    className="w-full border-[#21466D] text-[#21466D] hover:bg-[#21466D] hover:text-[white] dark:border-[#ffc82a] dark:text-[#ffc82a] dark:hover:bg-[#ffc82a] dark:hover:text-black transition-all duration-200 bg-transparent"
                     onClick={() => window.open("https://t.me/usat_kutubxona_bot", "_blank")}
                   >
                     Telegram Bot orqali ro'yxatdan o'tish
