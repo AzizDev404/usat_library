@@ -135,7 +135,7 @@ export default function Navbar() {
       {/* Upper Navbar */}
       <nav className="sticky top-0 z-50 w-full border-b bg-background py-5">
         <div className="container flex h-16 items-center justify-between px-4">
-          <Link href="/" className="flex items-center space-x-2 max-md:justify-center">
+          <Link href="/#top" className="flex items-center space-x-2 max-md:justify-center">
             <div className="w-[250px] max-md:w-[180px] max-md:flex max-md:justify-center">
               <Image src={DarkLogo || "/placeholder.svg"} alt="Logo" className="w-full" />
             </div>

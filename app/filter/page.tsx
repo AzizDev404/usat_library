@@ -86,7 +86,7 @@ useEffect(() => {
 
   if (!isClient) return null
   return (
-    <div className="flex flex-col md:flex-row min-h-screen container">
+    <div id="top" className="flex flex-col md:flex-row min-h-screen container">
       {/* Mobile Filter Toggle */}
       <div className="md:hidden p-4">
         <Button onClick={() => setShowMobileFilter(!showMobileFilter)}>

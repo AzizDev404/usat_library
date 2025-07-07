@@ -209,7 +209,7 @@ const showNotification = (message: string) => {
   }
 
   return (
-    <div className="min-h-screen bg-background mt-10">
+    <div id="top" className="min-h-screen bg-background mt-10">
        {/* Sticky Search and Filters */}
      {notification && (
         <div className="fixed top-[100px] left-1/2 transform -translate-x-1/2 z-50">
@@ -345,16 +345,16 @@ const showNotification = (message: string) => {
                             </div>
 
                             {/* Buttons - Smaller */}
-                            <div className="flex flex-col sm:flex-row gap-2 md:gap-3 pt-2">
+                            <div className="flex   gap-2 md:gap-2 pt-2 max-lg:flex-col">
                               <Button
                                 variant="outline"
                                 onClick={(e) => online(e)}
-                                className="flex-1 hover:bg-[#21466D]/10 transition-all bg-transparent border-[#21466D]/20 text-[#21466D] h-10 md:h-12 text-sm md:text-base"
+                                className="flex-1 hover:bg-[#21466D]/10 transition-all bg-transparent border-[#21466D]/20 text-[#21466D] h-10 md:h-10  text-sm md:text-base"
                               >
                                 <Eye className="h-4 w-4 mr-2" /> Onlayn o'qish
                               </Button>
                               <Button
-                                className="flex-1 bg-[#21466D] hover:bg-[#ffc82a] text-white h-10 md:h-12 font-semibold text-sm md:text-base"
+                                className="flex-1 bg-[#21466D] hover:bg-[#ffc82a] text-white h-10 md:h-10 font-semibold text-sm md:text-base"
                                 onClick={(e) => handleCardClick(book.id)}
                               >
                                 <Book className="h-4 w-4 mr-2" />

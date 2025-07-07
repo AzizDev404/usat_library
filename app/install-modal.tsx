@@ -88,9 +88,7 @@ export default function PWAInstallModal() {
               <Download className="h-5 w-5" />
               Ilovani o'rnatish
             </DialogTitle>
-            <Button variant="ghost" size="icon" onClick={handleClose} className="h-6 w-6 p-0">
-              <X className="h-4 w-4" />
-            </Button>
+            
           </div>
           <DialogDescription className="text-gray-600">
             USAT Kutubxonasini o'z qurilmangizga o'rnating va tezkor kirish imkoniyatiga ega bo'ling.
@@ -119,7 +117,7 @@ export default function PWAInstallModal() {
           <Button variant="outline" onClick={handleClose} className="flex-1 bg-transparent">
             Keyinroq
           </Button>
-          <Button onClick={handleInstall} className="flex-1 bg-[#21466D] hover:bg-[#1a3a5c]">
+          <Button onClick={handleInstall} className="flex-1 bg-[#21466D] hover:bg-[#1a3a5c] text-white">
             O'rnatish
           </Button>
         </DialogFooter>
