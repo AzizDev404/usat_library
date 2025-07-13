@@ -123,3 +123,96 @@ body {
 }
 
 
+/* Custom Swiper Styles */
+.book-swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.book-swiper .swiper-slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Custom Swiper Pagination - Mobile va Desktop bir xil */
+.custom-swiper-pagination {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-top: 16px !important;
+}
+
+.custom-bullet {
+  width: 12px !important;
+  height: 12px !important;
+  background: rgba(33, 70, 109, 0.3) !important;
+  border-radius: 50% !important;
+  transition: all 0.3s ease !important;
+  margin: 0 !important;
+  opacity: 0.7 !important;
+  cursor: pointer !important;
+}
+
+.custom-bullet-active {
+  width: 32px !important;
+  height: 12px !important;
+  background: #ffc82a !important;
+  border-radius: 6px !important;
+  opacity: 1 !important;
+  box-shadow: 0 2px 8px rgba(255, 200, 42, 0.4) !important;
+}
+
+/* Mobile va Desktop uchun bir xil o'lcham */
+@media (max-width: 768px) {
+  .custom-swiper-pagination {
+    margin-top: 12px !important;
+    gap: 6px !important;
+  }
+
+  .custom-bullet {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  .custom-bullet-active {
+    width: 32px !important;
+    height: 12px !important;
+  }
+}
+
+/* Hover effect */
+.custom-bullet:hover {
+  background: rgba(33, 70, 109, 0.6) !important;
+  transform: scale(1.1) !important;
+}
+
+.custom-bullet-active:hover {
+  box-shadow: 0 4px 12px rgba(255, 200, 42, 0.6) !important;
+}
+
+
+
+/* Custom Navigation Buttons */
+.swiper-button-next,
+.swiper-button-prev {
+  color: white !important;
+}
+
+.swiper-button-next:after,
+.swiper-button-prev:after {
+  font-size: 18px !important;
+  font-weight: bold !important;
+}
+
+/* Pagination container */
+.book-swiper .swiper-pagination {
+  bottom: 12px !important;
+}
+
+@media (max-width: 768px) {
+  .book-swiper .swiper-pagination {
+    bottom: 8px !important;
+  }
+}

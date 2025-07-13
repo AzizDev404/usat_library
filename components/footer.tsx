@@ -1,8 +1,31 @@
+"use client"
 import Image from "next/image"
 import Link from "next/link"
 import DarkLogo from "/public/logo-icon.png"
 import { Info, Locate, LocateFixed, LocateIcon, LocateOffIcon, Map, PhoneCall } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
 export default function Footer() {
+  const [mounted, setMounted] = useState(false)
+    const pathname = usePathname()
+    const [isClient, setIsClient] = useState(false)
+
+
+  useEffect(() => {
+    setIsClient(true)
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    // Har route o'zgarganda sahifani yuqoriga scroll qiladi
+    window.scrollTo(0, 0)
+  }, [pathname])
+
+  
+  if (pathname === "/login") return <></>
+  if (!mounted) return null
+  if (!isClient) return null
+  
   return (
     <footer className="bg-[#21466D] text-white py-10 mt-16 max-md:mb-10 max-md:mt-2">
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 ">
@@ -24,18 +47,43 @@ export default function Footer() {
         </div>
 
         {/* Kontakt */}
-        <div className="flex flex-col md:flex-row gap-6 md:gap-10">
-  {/* Matn qismi */}
+       {/* Kontakt */}
+<div className="flex flex-col md:flex-row gap-6 md:gap-10">
   <div className="flex-1 flex flex-col gap-3">
     <h3 className="text-lg font-semibold">Kontakt</h3>
-    <p className="text-sm text-white flex justify-start items-center gap-3"><Map/>USAT Universiteti, Toshkent, O'zbekiston</p>
-    <p className="text-sm text-white flex justify-start items-center gap-3"><PhoneCall/>+998 (90) 123-45-67</p>
-    <p className="text-sm text-white flex justify-start items-center gap-3"><Info/>info@usat.uz</p>
-  </div>
 
-  {/* Xarita qismi */}
-  
+    {/* Joylashuvga link */}
+    <a
+      href="https://www.google.com/maps?q=University+of+Science+and+Technologies"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-sm text-white flex items-center gap-3 hover:text-[#ffc82a]"
+    >
+      <Map /> USAT Universiteti, Toshkent, O'zbekiston
+    </a>
+
+    {/* Qo‘ng‘iroq qilish */}
+    <a
+      href="tel:+998788883888"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-sm text-white flex items-center gap-3 hover:text-[#ffc82a]"
+    >
+      <PhoneCall /> +998 (90) 123-45-67
+    </a>
+
+    {/* Email / saytga o‘tish */}
+    <a
+      href="https://usat.uz"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-sm text-white flex items-center gap-3 hover:text-[#ffc82a]"
+    >
+      <Info /> info@usat.uz
+    </a>
+  </div>
 </div>
+
 
       </div>
 <div className="flex-1 container mx-auto my-10">

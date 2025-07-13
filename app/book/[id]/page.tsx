@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,38 +16,194 @@ import {
   Hash,
   ChevronLeft,
   ChevronRight,
+  FileText,
+  Download,
 } from "lucide-react"
 import { toast } from "sonner"
 import Image from "next/image"
-import { mockBooks } from "@/data/mockBooks"
+import { getAllBooks, getBookItems } from "@/lib/api"
+import { getFullImageUrl } from "@/lib/utils"
+import { useMediaQuery } from "@/lib/hooks/useMediaQuery"
+
+interface BookData {
+  id: string
+  name: string
+  author_id: string | null
+  year: number
+  page: number
+  books: number
+  book_count: number
+  description: string
+  image_id: string
+  createdAt: string
+  updatedAt: string
+  auther_id: string
+  Auther: {
+    id: string
+    name: string
+  }
+  image: {
+    id: string
+    url: string
+  }
+}
+
+interface BookItem {
+  id: string
+  book_id: string
+  language_id: string
+  alphabet_id: string
+  status_id: number
+  pdf_id: string
+  createdAt: string
+  updatedAt: string
+  kafedra_id: string | null
+  PDFFile: {
+    id: string
+    file_url: string
+    original_name: string
+    file_size: number
+  }
+  BookCategoryKafedra: {
+    category_id: string
+    kafedra_id: string
+    category: {
+      id: string
+      name_uz: string
+      name_ru: string
+    }
+    kafedra: {
+      id: string
+      name_uz: string
+      name_ru: string
+    }
+  }
+}
+
+interface EnrichedBook extends BookData {
+  bookItem?: BookItem
+}
+
 export default function BookDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const bookId = Number.parseInt(params.id as string)
-  const [book, setBook] = useState<any>(null)
+  const bookId = params.id as string
+  const [book, setBook] = useState<EnrichedBook | null>(null)
+  const [allBooks, setAllBooks] = useState<EnrichedBook[]>([])
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
   const [currentX, setCurrentX] = useState(0)
   const swiperRef = useRef<HTMLDivElement>(null)
-const [isClient, setIsClient] = useState(false);
-  const [notification, setNotification] = useState<string | null>(null)
-
+  const [isClient, setIsClient] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const isMobile = useMediaQuery("(max-width: 768px)")
 
   useEffect(() => {
-    const foundBook = mockBooks.find((b) => b.id === bookId)
-    if (foundBook) {
-      setBook(foundBook)
-    } else {
-      showNotification("Kitob topilmadi")
-      router.push("/")
+    const fetchBookData = async () => {
+      try {
+        setLoading(true)
+
+        // BookItems dan ma'lumot olish
+        const bookItemsData = await getBookItems()
+        console.log("BookItems API dan kelgan ma'lumotlar:", bookItemsData)
+
+        // Books ma'lumotlarini olish
+        const booksData = await getAllBooks()
+        console.log("Books API dan kelgan ma'lumotlar:", booksData)
+
+        let books: BookData[] = []
+        let bookItems: BookItem[] = []
+
+        // BookItems ma'lumotlarini parse qilish
+        if (Array.isArray(bookItemsData)) {
+  bookItems = bookItemsData
+} else if (
+  typeof bookItemsData === "object" &&
+  bookItemsData !== null &&
+  "data" in bookItemsData &&
+  Array.isArray((bookItemsData as any).data)
+) {
+  bookItems = (bookItemsData as any).data
+}
+
+        // Books ma'lumotlarini parse qilish
+        if (booksData.books && Array.isArray(booksData.books)) {
+          books = booksData.books
+        } else if (Array.isArray(booksData)) {
+          books = booksData
+        } else {
+          books = booksData.books || booksData
+        }
+
+        // Joriy kitobning bookItem ma'lumotini topish
+        const currentBookItem = bookItems.find((item) => item.book_id === bookId)
+        console.log("Joriy kitob uchun bookItem:", currentBookItem)
+
+        if (currentBookItem) {
+          // BookItem mavjud bo'lsa, books dan asosiy ma'lumotni topish
+          const mainBookData = books.find((b) => b.id === currentBookItem.book_id)
+
+          if (mainBookData) {
+            const enrichedBook: EnrichedBook = {
+              ...mainBookData,
+              bookItem: currentBookItem,
+            }
+            setBook(enrichedBook)
+          } else {
+            // Agar books da topilmasa, bookItem ma'lumotlaridan foydalanish
+            const bookFromItem: EnrichedBook = {
+              id: currentBookItem.book_id,
+              name: `Kitob #${currentBookItem.book_id}`,
+              author_id: null,
+              year: new Date(currentBookItem.createdAt).getFullYear(),
+              page: 0,
+              books: 0,
+              book_count: 0,
+              description: "Bu kitob haqida qo'shimcha ma'lumot mavjud emas.",
+              image_id: "",
+              createdAt: currentBookItem.createdAt,
+              updatedAt: currentBookItem.updatedAt,
+              auther_id: "",
+              Auther: {
+                id: "",
+                name: "Noma'lum",
+              },
+              image: {
+                id: "",
+                url: "",
+              },
+              bookItem: currentBookItem,
+            }
+            setBook(bookFromItem)
+          }
+
+          // Barcha kitoblarni enriched qilish
+          const enrichedBooks: EnrichedBook[] = books.map((bookData) => {
+            const bookItem = bookItems.find((item) => item.book_id === bookData.id)
+            return {
+              ...bookData,
+              bookItem,
+            }
+          })
+          setAllBooks(enrichedBooks)
+        } else {
+          toast.error("Kitob ma'lumotlari topilmadi")
+          router.push("/")
+        }
+      } catch (err) {
+        console.error("Kitob ma'lumotlarini olishda xatolik:", err)
+        toast.error("Kitob ma'lumotlarini olishda xatolik yuz berdi")
+        router.push("/")
+      } finally {
+        setLoading(false)
+      }
     }
+
+    fetchBookData()
   }, [bookId, router])
-const showNotification = (message: string) => {
-    setNotification(message)
-    setTimeout(() => setNotification(null), 3000)
-  }
-  const addToCart = (selectedBook?: any) => {
+
+  const addToCart = (selectedBook?: EnrichedBook) => {
     const targetBook = selectedBook || book
     if (!targetBook) return
 
@@ -58,20 +213,92 @@ const showNotification = (message: string) => {
     if (!existingBook) {
       cart.push(targetBook)
       localStorage.setItem("cart", JSON.stringify(cart))
-      showNotification(`${targetBook.title} savatga qo'shildi`)
+      toast.success(`${targetBook.name} savatga qo'shildi`)
       window.dispatchEvent(new Event("storage"))
     } else {
-      showNotification(`${targetBook.title} allaqachon savatda mavjud`)
+      toast.warning(`${targetBook.name} allaqachon savatda mavjud`)
     }
   }
 
-  const online = () => {
-   showNotification("Online Kitob o'qish da hali sozlashlar ketmoqda")
+  const openPDF = () => {
+    if (book?.bookItem?.PDFFile?.file_url) {
+      window.open(book.bookItem.PDFFile.file_url, "_blank")
+    } else {
+      toast.warning("PDF fayl mavjud emas")
+    }
+  }
+
+  const downloadPDF = () => {
+    if (book?.bookItem?.PDFFile?.file_url) {
+      const link = document.createElement("a")
+      link.href = book.bookItem.PDFFile.file_url
+      link.download = book.bookItem.PDFFile.original_name || `${book.name}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.success("PDF yuklab olinmoqda...")
+    } else {
+      toast.warning("PDF fayl mavjud emas")
+    }
   }
 
   // Get related books (exclude current book)
-  const relatedBooks = mockBooks.filter((b) => b.id !== bookId).slice(0, 12)
-  const itemsPerSlide = 4
+  const getRelatedBooks = () => {
+    // Hozirgi kitobni exclude qilish
+    const otherBooks = allBooks.filter((b) => b.id !== bookId)
+
+    if (otherBooks.length === 0) return []
+
+    // Hozirgi kitobning kategoriya va kafedra ma'lumotlari
+    const currentCategory = book?.bookItem?.BookCategoryKafedra?.category?.id
+    const currentKafedra = book?.bookItem?.BookCategoryKafedra?.kafedra?.id
+
+    // Birinchi navbatda bir xil kategoriya va kafedradagi kitoblar
+    const sameCategoryAndKafedra = otherBooks.filter((relatedBook) => {
+      const bookCategory = relatedBook.bookItem?.BookCategoryKafedra?.category?.id
+      const bookKafedra = relatedBook.bookItem?.BookCategoryKafedra?.kafedra?.id
+      return bookCategory === currentCategory && bookKafedra === currentKafedra
+    })
+
+    // Ikkinchi navbatda bir xil kategoriyali kitoblar
+    const sameCategoryBooks = otherBooks.filter((relatedBook) => {
+      const bookCategory = relatedBook.bookItem?.BookCategoryKafedra?.category?.id
+      return bookCategory === currentCategory && !sameCategoryAndKafedra.includes(relatedBook)
+    })
+
+    // Uchinchi navbatda bir xil kafedradagi kitoblar
+    const sameKafedraBooks = otherBooks.filter((relatedBook) => {
+      const bookKafedra = relatedBook.bookItem?.BookCategoryKafedra?.kafedra?.id
+      return (
+        bookKafedra === currentKafedra &&
+        !sameCategoryAndKafedra.includes(relatedBook) &&
+        !sameCategoryBooks.includes(relatedBook)
+      )
+    })
+
+    // Qolgan kitoblar
+    const otherRelatedBooks = otherBooks.filter((relatedBook) => {
+      return (
+        !sameCategoryAndKafedra.includes(relatedBook) &&
+        !sameCategoryBooks.includes(relatedBook) &&
+        !sameKafedraBooks.includes(relatedBook)
+      )
+    })
+
+    // Tartib bo'yicha birlashtirish va 12 taga cheklash
+    const relatedBooksList = [
+      ...sameCategoryAndKafedra,
+      ...sameCategoryBooks,
+      ...sameKafedraBooks,
+      ...otherRelatedBooks,
+    ].slice(0, 12)
+
+    return relatedBooksList
+  }
+
+  const relatedBooks = getRelatedBooks()
+  // Mobile uchun 1 ta, desktop uchun 4 ta
+  const itemsPerSlide = isMobile ? 1 : 4
   const slidesCount = Math.ceil(relatedBooks.length / itemsPerSlide)
 
   // Auto-play swiper
@@ -99,7 +326,6 @@ const showNotification = (message: string) => {
   const handleEnd = () => {
     if (!isDragging) return
     setIsDragging(false)
-
     const diff = startX - currentX
     const threshold = 50
 
@@ -122,15 +348,34 @@ const showNotification = (message: string) => {
     setCurrentSlide((prev) => (prev - 1 + slidesCount) % slidesCount)
   }
 
-  const handleBookClick = (bookId: number) => {
+  const handleBookClick = (bookId: string) => {
     router.push(`/book/${bookId}`)
   }
-  
- useEffect(() => {
-    setIsClient(true); // Clientda ekanligingizni aniqlash
-  }, []);
 
-  if (!isClient) return null; 
+  // Kitob nomini kesish funksiyasi
+  const truncateBookName = (name: string, maxLength = 20) => {
+    if (name.length <= maxLength) return name
+    return name.slice(0, maxLength) + "..."
+  }
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  if (!isClient) return null
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4 animate-pulse" />
+            <p className="text-muted-foreground">Kitob yuklanmoqda...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (!book) {
     return (
@@ -138,24 +383,16 @@ const showNotification = (message: string) => {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Kitob yuklanmoqda...</p>
+            <p className="text-muted-foreground">Kitob topilmadi</p>
           </div>
         </div>
       </div>
     )
   }
- 
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Back Button */}
-       {notification && (
-        <div className="fixed top-[100px] left-1/2 transform -translate-x-1/2 z-50">
-    <div className="p-4 w-[30vw] text-white bg-[#21466D] rounded-md shadow animate-fade-in text-center">
-      {notification}
-    </div>
-  </div>
-      )}
       <Button variant="ghost" onClick={() => router.back()} className="mb-6 hover:bg-[#21466D]/10 text-[#21466D]">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Orqaga
@@ -166,39 +403,52 @@ const showNotification = (message: string) => {
         <div className="lg:col-span-1">
           <Card className="border-[#21466D]/10">
             <CardContent className="p-6">
-              <div className="aspect-[3/4] overflow-hidden rounded-lg mb-4">
+              <div className="aspect-[3/4] overflow-hidden rounded-lg mb-11">
                 <Image
-                  src={book.cover || "/placeholder.svg"}
-                  alt={book.title}
+                  src={book.image?.url ? getFullImageUrl(book.image.url) : "/placeholder.svg"}
+                  alt={book.name}
                   width={300}
                   height={400}
                   className="w-full h-full object-cover"
                 />
               </div>
+
               {/* Action Buttons */}
-              <div className="space-y-3">
-                <Button
-                  variant="outline"
-                  onClick={online}
-                  className="w-full hover:bg-[#21466D]/10 transition-all bg-transparent border-[#21466D]/20 text-[#21466D]"
-                >
-                  <Eye className="h-4 w-4 mr-2" /> Onlayn o'qish
-                </Button>
-                <Button className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white" onClick={() => addToCart()}>
-                  <ShoppingCart className="h-4 w-4 mr-2" /> Savatga qo'shish
+              <div className="space-y-3 ">
+                {book.bookItem?.PDFFile ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={openPDF}
+                      className="w-full hover:bg-[#21466D]/10 transition-all bg-transparent border-[#21466D]/20 text-[#21466D]"
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Onlayn o'qish
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={downloadPDF}
+                      className="w-full hover:bg-[#21466D]/10 transition-all bg-transparent border-[#21466D]/20 text-[#21466D]"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      PDF yuklab olish
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="outline" disabled className="w-full bg-gray-100 text-gray-400 cursor-not-allowed">
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF mavjud emas
+                  </Button>
+                )}
+
+                <Button className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white mb-10" onClick={() => addToCart()}>
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Savatga qo'shish
                 </Button>
               </div>
+
               {/* Availability Status */}
-              <div className="mt-4 p-3 rounded-lg bg-[#21466D]/5">
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      book.availability === "Mavjud" ? "bg-green-500" : "bg-yellow-500"
-                    }`}
-                  />
-                  <span className="text-sm font-medium text-[#21466D]">Mavjud</span>
-                </div>
-              </div>
+              
             </CardContent>
           </Card>
         </div>
@@ -208,16 +458,20 @@ const showNotification = (message: string) => {
           {/* Main Info */}
           <Card className="border-[#21466D]/10">
             <CardHeader>
-              <CardTitle className="text-2xl md:text-3xl text-[#21466D]">{book.title}</CardTitle>
+              <CardTitle className="text-2xl md:text-3xl text-[#21466D]">{book.name}</CardTitle>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="bg-[#21466D]/10 text-[#21466D]">
-                  {book.topic}
-                </Badge>
+                {book.bookItem?.BookCategoryKafedra && (
+                  <>
+                    <Badge variant="secondary" className="bg-[#21466D]/10 text-[#21466D]">
+                      {book.bookItem.BookCategoryKafedra.category.name_uz}
+                    </Badge>
+                    <Badge variant="outline" className="border-[#21466D]/20 text-[#21466D]">
+                      {book.bookItem.BookCategoryKafedra.kafedra.name_uz}
+                    </Badge>
+                  </>
+                )}
                 <Badge variant="outline" className="border-[#21466D]/20 text-[#21466D]">
-                  {book.direction}
-                </Badge>
-                <Badge variant="outline" className="border-[#21466D]/20 text-[#21466D]">
-                  {book.department}
+                  {book.year}-yil
                 </Badge>
               </div>
             </CardHeader>
@@ -238,9 +492,10 @@ const showNotification = (message: string) => {
                     <User className="h-5 w-5 text-[#21466D]" />
                     <div>
                       <p className="text-sm text-muted-foreground">Muallif</p>
-                      <p className="font-medium text-[#21466D]">{book.author}</p>
+                      <p className="font-medium text-[#21466D]">{book.Auther?.name || "Noma'lum"}</p>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-3">
                     <Calendar className="h-5 w-5 text-[#21466D]" />
                     <div>
@@ -248,34 +503,46 @@ const showNotification = (message: string) => {
                       <p className="font-medium text-[#21466D]">{book.year}</p>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-3">
                     <BookOpen className="h-5 w-5 text-[#21466D]" />
                     <div>
                       <p className="text-sm text-muted-foreground">Sahifalar soni</p>
-                      <p className="font-medium text-[#21466D]">{book.pages} bet</p>
+                      <p className="font-medium text-[#21466D]">{book.page} bet</p>
                     </div>
                   </div>
                 </div>
+
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Building className="h-5 w-5 text-[#21466D]" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Nashriyot</p>
-                      <p className="font-medium text-[#21466D]">{book.publisher}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Globe className="h-5 w-5 text-[#21466D]" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Til</p>
-                      <p className="font-medium text-[#21466D]">{book.language}</p>
-                    </div>
-                  </div>
+                  {book.bookItem?.BookCategoryKafedra && (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <Building className="h-5 w-5 text-[#21466D]" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Kafedra</p>
+                          <p className="font-medium text-[#21466D]">
+                            {book.bookItem.BookCategoryKafedra.kafedra.name_uz}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <Globe className="h-5 w-5 text-[#21466D]" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Kategoriya</p>
+                          <p className="font-medium text-[#21466D]">
+                            {book.bookItem.BookCategoryKafedra.category.name_uz}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                   <div className="flex items-center gap-3">
                     <Hash className="h-5 w-5 text-[#21466D]" />
                     <div>
-                      <p className="text-sm text-muted-foreground">ISBN</p>
-                      <p className="font-medium text-[#21466D]">{book.isbn}</p>
+                      <p className="text-sm text-muted-foreground">Kitob ID</p>
+                      <p className="font-medium text-[#21466D]">#{book.id}</p>
                     </div>
                   </div>
                 </div>
@@ -291,7 +558,7 @@ const showNotification = (message: string) => {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
                 <div className="p-4 rounded-lg bg-[#21466D]/5">
-                  <p className="text-2xl font-bold text-[#21466D]">{book.pages}</p>
+                  <p className="text-2xl font-bold text-[#21466D]">{book.page}</p>
                   <p className="text-sm text-muted-foreground">Sahifa</p>
                 </div>
                 <div className="p-4 rounded-lg bg-[#21466D]/5">
@@ -299,8 +566,8 @@ const showNotification = (message: string) => {
                   <p className="text-sm text-muted-foreground">Yil</p>
                 </div>
                 <div className="p-4 rounded-lg bg-[#21466D]/5">
-                  <p className="text-2xl font-bold text-[#21466D]">#{book.id}</p>
-                  <p className="text-sm text-muted-foreground">ID</p>
+                  <p className="text-2xl font-bold text-[#21466D]">{book.book_count}</p>
+                  <p className="text-sm text-muted-foreground">Nusxa</p>
                 </div>
               </div>
             </CardContent>
@@ -309,128 +576,120 @@ const showNotification = (message: string) => {
       </div>
 
       {/* Related Books Swiper */}
-      <div className="mt-12">
-        <Card className="border-[#21466D]/10">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xl text-[#21466D]">Boshqa kitoblar</CardTitle>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={prevSlide}
-                  className="border-[#21466D]/20 text-[#21466D] hover:bg-[#21466D]/10 bg-transparent"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={nextSlide}
-                  className="border-[#21466D]/20 text-[#21466D] hover:bg-[#21466D]/10 bg-transparent"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+      {relatedBooks.length > 0 && (
+        <div className="mt-12">
+          <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-[#21466D]/10 hover:border-[#21466D]/20 h-auto flex flex-col">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl text-[#21466D]">
+                  {book?.bookItem?.BookCategoryKafedra
+                    ? `${book.bookItem.BookCategoryKafedra.category.name_uz} kategoriyasidagi kitoblar`
+                    : "Boshqa kitoblar"}
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={prevSlide}
+                    className="border-[#21466D]/20 text-[#21466D] hover:bg-[#21466D]/10 bg-transparent"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={nextSlide}
+                    className="border-[#21466D]/20 text-[#21466D] hover:bg-[#21466D]/10 bg-transparent"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-hidden">
-              <div
-                ref={swiperRef}
-                className="flex transition-transform duration-500 ease-in-out cursor-grab active:cursor-grabbing"
-                style={{
-                  transform: `translateX(-${currentSlide * 100}%)`,
-                  ...(isDragging && { transitionDuration: "0ms" }),
-                }}
-                onMouseDown={(e) => handleStart(e.clientX)}
-                onMouseMove={(e) => handleMove(e.clientX)}
-                onMouseUp={handleEnd}
-                onMouseLeave={handleEnd}
-                onTouchStart={(e) => handleStart(e.touches[0].clientX)}
-                onTouchMove={(e) => handleMove(e.touches[0].clientX)}
-                onTouchEnd={handleEnd}
-              >
-                {Array.from({ length: slidesCount }).map((_, slideIndex) => (
-                  <div key={slideIndex} className="w-full flex-shrink-0">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {relatedBooks
-                        .slice(slideIndex * itemsPerSlide, (slideIndex + 1) * itemsPerSlide)
-                        .map((relatedBook) => (
-                          <Card
-                            key={relatedBook.id}
-                            className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-[#21466D]/10 hover:border-[#21466D]/20"
-                            onClick={() => handleBookClick(relatedBook.id)}
-                          >
-                            <CardContent className="p-4">
-                              <div className="aspect-[3/4] overflow-hidden rounded-lg mb-3">
-                                <Image
-                                  src={relatedBook.cover || "/placeholder.svg"}
-                                  alt={relatedBook.title}
-                                  width={150}
-                                  height={200}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                />
-                              </div>
-                              <h4 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-[#21466D] transition-colors">
-                                {relatedBook.title}
-                              </h4>
-                              <div className="space-y-1 text-xs text-muted-foreground mb-3">
-                                <p>{relatedBook.author}</p>
-                                <p>
-                                  {relatedBook.pages} bet • {relatedBook.year}
-                                </p>
-                                <Badge variant="secondary" className="text-xs bg-[#21466D]/10 text-[#21466D]">
-                                  {relatedBook.topic}
-                                </Badge>
-                              </div>
-                              <div className="flex flex-col gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    online()
-                                  }}
-                                  className="w-full text-xs border-[#21466D]/20 text-[#21466D] hover:bg-[#21466D]/10"
-                                >
-                                  <Eye className="h-3 w-3 mr-1" /> O'qish
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    addToCart(relatedBook)
-                                  }}
-                                  className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white text-xs"
-                                >
-                                  <ShoppingCart className="h-3 w-3 mr-1" /> Savat
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-hidden">
+                <div
+                  ref={swiperRef}
+                  className="flex transition-transform duration-500 ease-in-out cursor-grab active:cursor-grabbing"
+                  style={{
+                    transform: `translateX(-${currentSlide * 100}%)`,
+                    ...(isDragging && { transitionDuration: "0ms" }),
+                  }}
+                  onMouseDown={(e) => handleStart(e.clientX)}
+                  onMouseMove={(e) => handleMove(e.clientX)}
+                  onMouseUp={handleEnd}
+                  onMouseLeave={handleEnd}
+                  onTouchStart={(e) => handleStart(e.touches[0].clientX)}
+                  onTouchMove={(e) => handleMove(e.touches[0].clientX)}
+                  onTouchEnd={handleEnd}
+                >
+                  {Array.from({ length: slidesCount }).map((_, slideIndex) => (
+                    <div key={slideIndex} className="w-full flex-shrink-0">
+                      <div className={`grid gap-4 ${isMobile ? "grid-cols-1" : "grid-cols-4"}`}>
+                        {relatedBooks
+                          .slice(slideIndex * itemsPerSlide, (slideIndex + 1) * itemsPerSlide)
+                          .map((relatedBook) => (
+                            <Card
+                              key={relatedBook.id}
+                              className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-[#21466D]/10 hover:border-[#21466D]/20 h-[420px] flex flex-col"
+                              onClick={() => handleBookClick(relatedBook.id)}
+                            >
+                               <CardContent className="p-4 flex flex-col h-full">
+    <div className="aspect-[3/4] overflow-hidden rounded-lg mb-3 flex-shrink-0 max-h-[280px]">
+      <Image
+        src={
+          relatedBook.image?.url
+            ? getFullImageUrl(relatedBook.image.url)
+            : "/placeholder.svg"
+        }
+        alt={relatedBook.name}
+        width={150}
+        height={250}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+      />
+    </div>
+    <div className="flex flex-col flex-grow">
+      <h4 className="font-semibold text-sm mb-2 group-hover:text-[#21466D] transition-colors truncate" title={relatedBook.name}>
+        {truncateBookName(relatedBook.name, 40)}
+      </h4>
+      <div className="space-y-1 text-xs text-muted-foreground mb-3 flex-grow">
+        <p>{relatedBook.Auther?.name || "Noma'lum"}</p>
+        <p>{relatedBook.page} bet • {relatedBook.year}</p>
+        {relatedBook.bookItem?.BookCategoryKafedra && (
+          <Badge variant="secondary" className="text-xs bg-[#21466D]/10 text-[#21466D]">
+            {relatedBook.bookItem.BookCategoryKafedra.category.name_uz}
+          </Badge>
+        )}
+      </div>
+      <div className="flex flex-col gap-2 mt-auto">
+        {/* tugmalar */}
+      </div>
+    </div>
+  </CardContent>
+                            </Card>
+                          ))}
+                      </div>
                     </div>
-                  </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pagination Dots */}
+              <div className="flex justify-center mt-6 gap-2">
+                {Array.from({ length: slidesCount }).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSlide(index)}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      index === currentSlide ? "bg-[#21466D] scale-125" : "bg-[#21466D]/30 hover:bg-[#21466D]/60"
+                    }`}
+                  />
                 ))}
               </div>
-            </div>
-
-            {/* Pagination Dots */}
-            <div className="flex justify-center mt-6 gap-2">
-              {Array.from({ length: slidesCount }).map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentSlide(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === currentSlide ? "bg-[#21466D] scale-125" : "bg-[#21466D]/30 hover:bg-[#21466D]/60"
-                  }`}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

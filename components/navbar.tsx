@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -13,14 +13,12 @@ import DarkLogo from "/public/logo-dark.png"
 import { useAuthStore } from "@/lib/store/auth"
 import { toast } from "sonner"
 import { usePathname } from "next/navigation"
-import { mockBooks } from "@/data/mockBooks"
+import { getAllBooks } from "@/lib/api"
+import { getFullImageUrl } from "@/lib/utils"
 
-const directions = ["Matematika", "Fizika", "Kimyo", "Tarix", "Adabiyot", "Iqtisodiyot"]
-const departments = ["Aniq fanlar", "Gumanitar fanlar", "Ijtimoiy fanlar"]
-const topics = ["Algebra", "Mexanika", "Organik kimyo", "O'zbekiston tarixi", "Nazariya", "Makroiqtisodiyot"]
 
 export default function Navbar() {
-  const { userId } = useAuthStore()
+  const { token } = useAuthStore()
   const [cartCount, setCartCount] = useState(0)
   const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
@@ -31,23 +29,27 @@ export default function Navbar() {
   const [selectedDirections, setSelectedDirections] = useState<string[]>([])
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([])
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
-  const [filteredBooks, setFilteredBooks] = useState(mockBooks)
-
+  const [filteredBooks, setFilteredBooks] = useState([])
+  const [allboks ,setbooks] = useState([])
   // UI states
   const [showSearch, setShowSearch] = useState(false)
   const [showDropdown, setShowDropdown] = useState<string | null>(null)
   const [showBooksPanel, setShowBooksPanel] = useState(false)
   const [showMobileSearch, setShowMobileSearch] = useState(false)
-
+  useEffect(()=>{
+      const allbooks = async ()=>{
+          const books = await getAllBooks()
+          setbooks(books)
+          return books
+      }
+      allbooks()
+  },[])
   // Filter books based on selected criteria
   useEffect(() => {
-    const filtered = mockBooks.filter((book) => {
-      const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesDirection = selectedDirections.length === 0 || selectedDirections.includes(book.direction)
-      const matchesDepartment = selectedDepartments.length === 0 || selectedDepartments.includes(book.department)
-      const matchesTopic = selectedTopics.length === 0 || selectedTopics.includes(book.topic)
+    const filtered = allboks.filter((book) => {
+      const matchesSearch = book.name.toLowerCase().includes(searchTerm.toLowerCase())
 
-      return matchesSearch && matchesDirection && matchesDepartment && matchesTopic
+      return matchesSearch 
     })
 
     setFilteredBooks(filtered)
@@ -60,6 +62,37 @@ export default function Navbar() {
       selectedTopics.length > 0
     setShowBooksPanel(hasFilters)
   }, [searchTerm, selectedDirections, selectedDepartments, selectedTopics])
+
+const panelRef = useRef<HTMLDivElement>(null)
+
+useEffect(() => {
+  function handleClickOutside(event: MouseEvent) {
+    if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+      setShowBooksPanel(false)
+      setSearchTerm("")
+    }
+  }
+
+  if (showBooksPanel) {
+    document.addEventListener("mousedown", handleClickOutside)
+  }
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside)
+  }
+}, [showBooksPanel])
+
+useEffect(() => {
+  if (showBooksPanel) {
+    document.body.style.overflow = "hidden"
+  } else {
+    document.body.style.overflow = ""
+  }
+
+  return () => {
+    document.body.style.overflow = ""
+  }
+}, [showBooksPanel])
 
   useEffect(() => {
     setIsClient(true)
@@ -76,38 +109,7 @@ export default function Navbar() {
     return () => window.removeEventListener("storage", handleStorageChange)
   }, [])
 
-  const handleCheckboxChange = (type: "direction" | "department" | "topic", value: string, checked: boolean) => {
-    if (type === "direction") {
-      setSelectedDirections((prev) => (checked ? [...prev, value] : prev.filter((item) => item !== value)))
-    } else if (type === "department") {
-      setSelectedDepartments((prev) => (checked ? [...prev, value] : prev.filter((item) => item !== value)))
-    } else if (type === "topic") {
-      setSelectedTopics((prev) => (checked ? [...prev, value] : prev.filter((item) => item !== value)))
-    }
-  }
-
-  const addToCart = (book: any, e: React.MouseEvent) => {
-    e.stopPropagation()
-    const cart = JSON.parse(localStorage.getItem("cart") || "[]")
-    const existingBook = cart.find((item: any) => item.id === book.id)
-
-    if (!existingBook) {
-      cart.push(book)
-      localStorage.setItem("cart", JSON.stringify(cart))
-      toast.success(`${book.title} savatga qo'shildi`, {
-        description: "Buyurtmani profil sahifasida rasmiylashing",
-        position: "top-center",
-        duration: 3000,
-      })
-      window.dispatchEvent(new Event("storage"))
-    } else {
-      toast.error(`${book.title} allaqachon savatda mavjud`, {
-        position: "top-center",
-        duration: 2500,
-      })
-    }
-  }
-
+  
   const clearAllFilters = () => {
     setSearchTerm("")
     setSelectedDirections([])
@@ -164,7 +166,12 @@ export default function Navbar() {
             </Button>
 
             {showBooksPanel && (
-              <div className="absolute top-[75px] w-[93.5%] max-h-[400px] z-30 bg-white border shadow-lg overflow-y-auto rounded-md">
+              <>
+              <div
+            className="fixed top-[108px] left-0 right-0 bottom-0 z-20 backdrop-brightness-50"
+      onClick={() => clearAllFilters()} // tashqariga bosganda yopish
+    />
+              <div ref={panelRef} className="absolute top-[75px] w-[92.4%] max-h-[400px] z-30 bg-white border shadow-lg overflow-y-auto rounded-md">
                 <div className="p-4 space-y-3">
                   <h3 className="text-sm font-semibold flex justify-between items-center text-[#21466D]">
                     <span>Natijalar ({filteredBooks.length})</span>
@@ -172,7 +179,7 @@ export default function Navbar() {
                       Yopish
                     </span>
                   </h3>
-                  {filteredBooks.slice(0, 10).map((book) => (
+                  {filteredBooks.map((book) => (
                     <Link
                       href={`/book/${book.id}`}
                       onClick={() => clearAllFilters()}
@@ -180,15 +187,17 @@ export default function Navbar() {
                       className="border-b border-gray-200 py-3 flex items-start gap-4 hover:bg-gray-50 transition"
                     >
                       <Image
-                        src={book.cover || "/placeholder.svg"}
-                        alt={book.title}
+                        src={ book.image?.image_url
+    ? getFullImageUrl(book.image.image_url)
+    : "/placeholder.svg"}
+                        alt={book.name}
                         width={60}
                         height={90}
                         className="rounded-md object-cover flex-shrink-0"
                       />
                       <div className="flex-1">
-                        <h4 className="text-base font-semibold text-[#21466D] line-clamp-1">{book.title}</h4>
-                        <p className="text-sm text-[#21466D]/70 line-clamp-2">{book.description}</p>
+                        <h4 className="text-base font-semibold text-[#21466D] line-clamp-1">{book.name}</h4>
+                        <p className="text-sm text-[#21466D]/70 line-clamp-2">{book.description }</p>
                       </div>
                     </Link>
                   ))}
@@ -197,6 +206,7 @@ export default function Navbar() {
                   )}
                 </div>
               </div>
+              </>
             )}
           </div>
 
@@ -220,7 +230,7 @@ export default function Navbar() {
 
           {/* Right side buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            {userId ? (
+            {token ? (
               <>
                 <Link href="/cart">
                   <Button
@@ -301,14 +311,14 @@ export default function Navbar() {
                       className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-md transition"
                     >
                       <Image
-                        src={book.cover || "/placeholder.svg"}
-                        alt={book.title}
+                        src={book.image.url || "/placeholder.svg"}
+                        alt={book.name}
                         width={40}
                         height={60}
                         className="rounded-md object-cover flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold text-[#21466D] line-clamp-1">{book.title}</h4>
+                        <h4 className="text-sm font-semibold text-[#21466D] line-clamp-1">{book.name}</h4>
                         <p className="text-xs text-[#21466D]/70 line-clamp-2">{book.description}</p>
                       </div>
                     </Link>
@@ -363,7 +373,7 @@ export default function Navbar() {
           )}
         </Link>
 
-        {userId ? (
+        {token ? (
           <>
             <Link href="/profile" className="flex-1 px-1">
               <Button

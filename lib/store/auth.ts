@@ -1,19 +1,20 @@
 import { create } from "zustand"
 
 interface AuthState {
-  userId: string | null
-  setUserId: (id: string) => void
-  clearUserId: () => void
+  token: string | null
+  setToken: (token: string) => void
+  clearToken: () => void
 }
 
+
 export const useAuthStore = create<AuthState>((set) => ({
-  userId: typeof window !== "undefined" ? localStorage.getItem("userId") : null,
-  setUserId: (id) => {
-    localStorage.setItem("userId", id)
-    set({ userId: id })
+  token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
+  setToken: (token) => {
+    localStorage.setItem("token", token)
+    set({ token })
   },
-  clearUserId: () => {
-    localStorage.removeItem("userId")
-    set({ userId: null })
+  clearToken: () => {
+    localStorage.removeItem("token")
+    set({ token: null })
   },
 }))

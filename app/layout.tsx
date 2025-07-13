@@ -29,7 +29,7 @@ export default function RootLayout({
     <html lang="uz" suppressHydrationWarning>
       <Head>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/light-logo.png" />
+        <link rel="icon" type="image/png" href="/light-logo.png" />
         <meta name="theme-color" content="#21466D" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -42,8 +42,16 @@ export default function RootLayout({
         <Toaster
           position="top-center"
           toastOptions={{
-            className: "text-[#21466D] font-medium rounded-lg border bg-white text-sm px-4 py-3",
-            duration: 3000,
+            style: {
+              width:'120%',
+              fontSize: '16px',
+              padding: '16px 18px',
+              borderRadius: '10px',
+              backgroundColor: '#21466D',
+              color: 'white',
+              textAlign:'center'
+            },
+            duration:3000
           }}
         />
         <Footer />

@@ -12,37 +12,47 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useAuthStore } from "@/lib/store/auth"
 import Image from "next/image"
+import { login } from "@/lib/api"
+import { useProfileStore } from "@/lib/store/profile"
 
 export default function LoginPage() {
   const [passport, setPassport] = useState("")
   const [password, setPassword] = useState("")
   const [isDark, setIsDark] = useState(false)
-  const { setUserId } = useAuthStore()
+  const { token } = useAuthStore()
   const router = useRouter()
 const [isClient, setIsClient] = useState(false);
-
+  const [loading,setLoading] = useState(false)
   useEffect(() => {
     setIsClient(true); // Clientda ekanligingizni aniqlash
   }, []);
-
+  const auth = useAuthStore()
+  const profile = useProfileStore()
   if (!isClient) return null; 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
     if (!passport || !password) {
       toast.error("Barcha maydonlarni to'liq to'ldiring")
       return
     }
+    try {
 
-    const userId = "user_" + Date.now()
-    setUserId(userId)
+    const loginRes = await login(passport, password)  as any
+    console.log("Login success:", loginRes)
+    console.log(loginRes)
+    auth.setToken(loginRes.data.token as string)
+    profile.setProfile(loginRes.data.user as any)
+    setLoading(false)
     toast.success("Siz muvaffaqiyatli kirdingiz")
     router.push("/")
+  } catch (error) {
+    setLoading(false)
+    console.error("API error:", error)
+  }
   }
 
-  const toggleTheme = () => {
-    setIsDark(!isDark)
-    document.documentElement.classList.toggle("dark")
-  }
+  
 
   return (
     <div className={`min-h-screen relative overflow-hidden ${isDark ? "dark" : ""}`}>
@@ -98,10 +108,11 @@ const [isClient, setIsClient] = useState(false);
 
                   <Button
                     type="submit"
+                    disabled={loading}
                     className="w-full h-12 bg-[#21466D] hover:bg-[#212c3f] text-[white] font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
                   >
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Kirish
+                    {loading ? (<></>) : (<LogIn className="h-4 w-4 mr-2" />)}
+                    {loading ? "...Loading" : "Kirish"}
                   </Button>
                 </form>
 
@@ -136,10 +147,10 @@ const [isClient, setIsClient] = useState(false);
 
               <div className="relative max-md:hidden w-[400%] h-[400%] ">
                 <Image
-                  src="/logo-dark.png"
+                  src="/light-logo.png"
                   alt="USAT Logo"
-                  width={500}
-                  height={500}
+                  width={300}
+                  height={300}
                   className=" object-contain"
                 />
               </div>
