@@ -165,12 +165,7 @@ export default function ProfilePage() {
       }
 
       // Fetch all data in parallel
-      const [ordersData, booksData, bookItemsData] = await Promise.all([getUserOrders(), getAllBooks(), getBookItems()])
-
-      console.log("Orders:", ordersData)
-      console.log("Books:", booksData)
-      console.log("BookItems:", bookItemsData)
-
+      const [ordersData, booksData, bookItemsData] = await Promise.all([getUserOrders(), getAllBooks(), getBookItems()]) as any
       // Filter orders for current user
       const userOrders = ordersData.data.filter((order: Order) => order.user_id === userId)
 

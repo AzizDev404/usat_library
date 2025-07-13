@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -103,42 +104,39 @@ export default function BookDetailPage() {
     const fetchBookData = async () => {
       try {
         setLoading(true)
-
         // BookItems dan ma'lumot olish
         const bookItemsData = await getBookItems()
-        console.log("BookItems API dan kelgan ma'lumotlar:", bookItemsData)
-
         // Books ma'lumotlarini olish
         const booksData = await getAllBooks()
-        console.log("Books API dan kelgan ma'lumotlar:", booksData)
 
         let books: BookData[] = []
         let bookItems: BookItem[] = []
 
         // BookItems ma'lumotlarini parse qilish
         if (Array.isArray(bookItemsData)) {
-  bookItems = bookItemsData
-} else if (
-  typeof bookItemsData === "object" &&
-  bookItemsData !== null &&
-  "data" in bookItemsData &&
-  Array.isArray((bookItemsData as any).data)
-) {
-  bookItems = (bookItemsData as any).data
-}
+          bookItems = bookItemsData
+        } else if (
+          typeof bookItemsData === "object" &&
+          bookItemsData !== null &&
+          "data" in bookItemsData &&
+          Array.isArray((bookItemsData as any).data)
+        ) {
+          bookItems = (bookItemsData as any).data
+        }
 
-        // Books ma'lumotlarini parse qilish
-        if (booksData.books && Array.isArray(booksData.books)) {
-          books = booksData.books
-        } else if (Array.isArray(booksData)) {
-          books = booksData
-        } else {
-          books = booksData.books || booksData
+        // Books ma'lumotlarini parse qilish - Fixed this part
+        if (booksData && typeof booksData === "object") {
+          if (booksData.books && Array.isArray(booksData.books)) {
+            books = booksData.books
+          } else if (booksData.data && Array.isArray(booksData.data)) {
+            books = booksData.data
+          } else if (Array.isArray(booksData)) {
+            books = booksData
+          }
         }
 
         // Joriy kitobning bookItem ma'lumotini topish
         const currentBookItem = bookItems.find((item) => item.book_id === bookId)
-        console.log("Joriy kitob uchun bookItem:", currentBookItem)
 
         if (currentBookItem) {
           // BookItem mavjud bo'lsa, books dan asosiy ma'lumotni topish
@@ -186,6 +184,7 @@ export default function BookDetailPage() {
               bookItem,
             }
           })
+
           setAllBooks(enrichedBooks)
         } else {
           toast.error("Kitob ma'lumotlari topilmadi")
@@ -246,7 +245,6 @@ export default function BookDetailPage() {
   const getRelatedBooks = () => {
     // Hozirgi kitobni exclude qilish
     const otherBooks = allBooks.filter((b) => b.id !== bookId)
-
     if (otherBooks.length === 0) return []
 
     // Hozirgi kitobning kategoriya va kafedra ma'lumotlari
@@ -297,6 +295,7 @@ export default function BookDetailPage() {
   }
 
   const relatedBooks = getRelatedBooks()
+
   // Mobile uchun 1 ta, desktop uchun 4 ta
   const itemsPerSlide = isMobile ? 1 : 4
   const slidesCount = Math.ceil(relatedBooks.length / itemsPerSlide)
@@ -326,6 +325,7 @@ export default function BookDetailPage() {
   const handleEnd = () => {
     if (!isDragging) return
     setIsDragging(false)
+
     const diff = startX - currentX
     const threshold = 50
 
@@ -414,7 +414,7 @@ export default function BookDetailPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="space-y-3 ">
+              <div className="space-y-3">
                 {book.bookItem?.PDFFile ? (
                   <>
                     <Button
@@ -441,14 +441,14 @@ export default function BookDetailPage() {
                   </Button>
                 )}
 
-                <Button className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white mb-10" onClick={() => addToCart()}>
+                <Button
+                  className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white mb-10"
+                  onClick={() => addToCart()}
+                >
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Savatga qo'shish
                 </Button>
               </div>
-
-              {/* Availability Status */}
-              
             </CardContent>
           </Card>
         </div>
@@ -634,38 +634,41 @@ export default function BookDetailPage() {
                               className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-[#21466D]/10 hover:border-[#21466D]/20 h-[420px] flex flex-col"
                               onClick={() => handleBookClick(relatedBook.id)}
                             >
-                               <CardContent className="p-4 flex flex-col h-full">
-    <div className="aspect-[3/4] overflow-hidden rounded-lg mb-3 flex-shrink-0 max-h-[280px]">
-      <Image
-        src={
-          relatedBook.image?.url
-            ? getFullImageUrl(relatedBook.image.url)
-            : "/placeholder.svg"
-        }
-        alt={relatedBook.name}
-        width={150}
-        height={250}
-        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-      />
-    </div>
-    <div className="flex flex-col flex-grow">
-      <h4 className="font-semibold text-sm mb-2 group-hover:text-[#21466D] transition-colors truncate" title={relatedBook.name}>
-        {truncateBookName(relatedBook.name, 40)}
-      </h4>
-      <div className="space-y-1 text-xs text-muted-foreground mb-3 flex-grow">
-        <p>{relatedBook.Auther?.name || "Noma'lum"}</p>
-        <p>{relatedBook.page} bet • {relatedBook.year}</p>
-        {relatedBook.bookItem?.BookCategoryKafedra && (
-          <Badge variant="secondary" className="text-xs bg-[#21466D]/10 text-[#21466D]">
-            {relatedBook.bookItem.BookCategoryKafedra.category.name_uz}
-          </Badge>
-        )}
-      </div>
-      <div className="flex flex-col gap-2 mt-auto">
-        {/* tugmalar */}
-      </div>
-    </div>
-  </CardContent>
+                              <CardContent className="p-4 flex flex-col h-full">
+                                <div className="aspect-[3/4] overflow-hidden rounded-lg mb-3 flex-shrink-0 max-h-[280px]">
+                                  <Image
+                                    src={
+                                      relatedBook.image?.url
+                                        ? getFullImageUrl(relatedBook.image.url)
+                                        : "/placeholder.svg"
+                                    }
+                                    alt={relatedBook.name}
+                                    width={150}
+                                    height={250}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                </div>
+                                <div className="flex flex-col flex-grow">
+                                  <h4
+                                    className="font-semibold text-sm mb-2 group-hover:text-[#21466D] transition-colors truncate"
+                                    title={relatedBook.name}
+                                  >
+                                    {truncateBookName(relatedBook.name, 40)}
+                                  </h4>
+                                  <div className="space-y-1 text-xs text-muted-foreground mb-3 flex-grow">
+                                    <p>{relatedBook.Auther?.name || "Noma'lum"}</p>
+                                    <p>
+                                      {relatedBook.page} bet • {relatedBook.year}
+                                    </p>
+                                    {relatedBook.bookItem?.BookCategoryKafedra && (
+                                      <Badge variant="secondary" className="text-xs bg-[#21466D]/10 text-[#21466D]">
+                                        {relatedBook.bookItem.BookCategoryKafedra.category.name_uz}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col gap-2 mt-auto">{/* tugmalar */}</div>
+                                </div>
+                              </CardContent>
                             </Card>
                           ))}
                       </div>

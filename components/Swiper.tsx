@@ -98,8 +98,7 @@ export default function BookSwiper({ initialBooks, initialBookItems }: BookSwipe
         if (!initialBooks || !initialBookItems) {
           const [booksData, bookItemsData] = await Promise.all([getAllBooks(), getBookItems()])
 
-          console.log("Books API dan kelgan ma'lumotlar:", booksData)
-          console.log("BookItems API dan kelgan ma'lumotlar:", bookItemsData)
+          
 
           // Books ma'lumotlarini parse qilish
           let parsedBooks: BookData[] = []

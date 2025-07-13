@@ -14,7 +14,6 @@ export const login = async (passport_id: string, password: string) => {
     passport_id,
     password,
   })
-  console.log(res)
   return res.data
 }
 
@@ -44,19 +43,23 @@ export const getBookItems = async () => {
 
 
 interface BooksResponse {
-  data: [];
+  data?: any[];
+  books?: any[];
+  success?: boolean;
+  message?: string;
 }
-// GET: /books
-export const getAllBooks = async () => {
-    const res = await axiosInstance.get<BooksResponse>("/books")
-    return res.data.data
+
+// GET: /books - Fixed return type
+export const getAllBooks = async (): Promise<BooksResponse> => {
+  const res = await axiosInstance.get("/books")
+  return res.data as BooksResponse
 }
+
 
 
 // GET: /alluser-order
 export const getUserOrders = async () => {
     const res = await axiosInstance.get("/alluser-order")
-    console.log(res)
     return res.data
 }
 
@@ -68,6 +71,5 @@ export const postUserOrder = async (book_id:number)=>{
     user_id:userId,
     book_id:book_id
   })
-  console.log(res)
   return res.data
 }

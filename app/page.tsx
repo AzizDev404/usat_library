@@ -64,7 +64,6 @@ export default function HomePage() {
       cart.push(book)
       localStorage.setItem("cart", JSON.stringify(cart))
       toast.success(`${book.name} savatga qo'shildi`, {
-        description: "Buyurtmani profil sahifasida rasmiylashing",
         position: "top-center",
         duration: 3000,
       })

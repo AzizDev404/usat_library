@@ -39,8 +39,12 @@ const [isClient, setIsClient] = useState(false);
     try {
 
     const loginRes = await login(passport, password)  as any
-    console.log("Login success:", loginRes)
-    console.log(loginRes)
+    if (!loginRes.success) {
+      toast.error(loginRes.message || "Kirishda xatolik yuz berdi")
+      setLoading(false)
+      return
+    }
+    
     auth.setToken(loginRes.data.token as string)
     profile.setProfile(loginRes.data.user as any)
     setLoading(false)

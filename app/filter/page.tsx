@@ -126,12 +126,7 @@ const FilterPage = () => {
           getBookItems(),
           getCategories(),
           getKafedras(),
-        ])
-
-        console.log("Books API response:", booksData)
-        console.log("BookItems API response:", bookItemsData)
-        console.log("Categories API response:", categoriesData)
-        console.log("Kafedras API response:", kafedrasData)
+        ]) as any
 
         // Parse books data
         let parsedBooks: BookData[] = []
