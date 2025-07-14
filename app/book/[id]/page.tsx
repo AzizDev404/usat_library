@@ -25,6 +25,7 @@ import Image from "next/image"
 import { getAllBooks, getBookItems } from "@/lib/api"
 import { getFullImageUrl } from "@/lib/utils"
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery"
+import { useTranslation } from "react-i18next" // i18n import
 
 interface BookData {
   id: string
@@ -86,6 +87,7 @@ interface EnrichedBook extends BookData {
 }
 
 export default function BookDetailPage() {
+  const { t, i18n } = useTranslation() // useTranslation hook'ini ishlatish
   const params = useParams()
   const router = useRouter()
   const bookId = params.id as string
@@ -152,20 +154,20 @@ export default function BookDetailPage() {
             // Agar books da topilmasa, bookItem ma'lumotlaridan foydalanish
             const bookFromItem: EnrichedBook = {
               id: currentBookItem.book_id,
-              name: `Kitob #${currentBookItem.book_id}`,
+              name: `${t("common.book")} #${currentBookItem.book_id}`,
               author_id: null,
               year: new Date(currentBookItem.createdAt).getFullYear(),
               page: 0,
               books: 0,
               book_count: 0,
-              description: "Bu kitob haqida qo'shimcha ma'lumot mavjud emas.",
+              description: t("common.descriptionNotAvailable"),
               image_id: "",
               createdAt: currentBookItem.createdAt,
               updatedAt: currentBookItem.updatedAt,
               auther_id: "",
               Auther: {
                 id: "",
-                name: "Noma'lum",
+                name: t("common.unknown"),
               },
               image: {
                 id: "",
@@ -187,12 +189,12 @@ export default function BookDetailPage() {
 
           setAllBooks(enrichedBooks)
         } else {
-          toast.error("Kitob ma'lumotlari topilmadi")
+          toast.error(t("common.bookNotFound"))
           router.push("/")
         }
       } catch (err) {
         console.error("Kitob ma'lumotlarini olishda xatolik:", err)
-        toast.error("Kitob ma'lumotlarini olishda xatolik yuz berdi")
+        toast.error(t("common.errorFetchingBook"))
         router.push("/")
       } finally {
         setLoading(false)
@@ -200,7 +202,7 @@ export default function BookDetailPage() {
     }
 
     fetchBookData()
-  }, [bookId, router])
+  }, [bookId, router, t])
 
   const addToCart = (selectedBook?: EnrichedBook) => {
     const targetBook = selectedBook || book
@@ -212,10 +214,10 @@ export default function BookDetailPage() {
     if (!existingBook) {
       cart.push(targetBook)
       localStorage.setItem("cart", JSON.stringify(cart))
-      toast.success(`${targetBook.name} savatga qo'shildi`)
+      toast.success(t("common.bookAddedToCart", { bookName: targetBook.name }))
       window.dispatchEvent(new Event("storage"))
     } else {
-      toast.warning(`${targetBook.name} allaqachon savatda mavjud`)
+      toast.warning(t("common.bookAlreadyInCart", { bookName: targetBook.name }))
     }
   }
 
@@ -223,7 +225,7 @@ export default function BookDetailPage() {
     if (book?.bookItem?.PDFFile?.file_url) {
       window.open(book.bookItem.PDFFile.file_url, "_blank")
     } else {
-      toast.warning("PDF fayl mavjud emas")
+      toast.warning(t("common.pdfNotAvailable"))
     }
   }
 
@@ -235,9 +237,9 @@ export default function BookDetailPage() {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      toast.success("PDF yuklab olinmoqda...")
+      toast.success(t("common.pdfDownloading"))
     } else {
-      toast.warning("PDF fayl mavjud emas")
+      toast.warning(t("common.pdfNotAvailable"))
     }
   }
 
@@ -266,9 +268,8 @@ export default function BookDetailPage() {
 
     // Uchinchi navbatda bir xil kafedradagi kitoblar
     const sameKafedraBooks = otherBooks.filter((relatedBook) => {
-      const bookKafedra = relatedBook.bookItem?.BookCategoryKafedra?.kafedra?.id
       return (
-        bookKafedra === currentKafedra &&
+        relatedBook.bookItem?.BookCategoryKafedra?.kafedra?.id === currentKafedra &&
         !sameCategoryAndKafedra.includes(relatedBook) &&
         !sameCategoryBooks.includes(relatedBook)
       )
@@ -370,7 +371,7 @@ export default function BookDetailPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4 animate-pulse" />
-            <p className="text-muted-foreground">Kitob yuklanmoqda...</p>
+            <p className="text-muted-foreground">{t("common.loadingBooks")}</p>
           </div>
         </div>
       </div>
@@ -383,7 +384,7 @@ export default function BookDetailPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Kitob topilmadi</p>
+            <p className="text-muted-foreground">{t("common.bookNotFound")}</p>
           </div>
         </div>
       </div>
@@ -395,7 +396,7 @@ export default function BookDetailPage() {
       {/* Back Button */}
       <Button variant="ghost" onClick={() => router.back()} className="mb-6 hover:bg-[#21466D]/10 text-[#21466D]">
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Orqaga
+        {t("common.back")}
       </Button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -423,7 +424,7 @@ export default function BookDetailPage() {
                       className="w-full hover:bg-[#21466D]/10 transition-all bg-transparent border-[#21466D]/20 text-[#21466D]"
                     >
                       <Eye className="h-4 w-4 mr-2" />
-                      Onlayn o'qish
+                      {t("common.onlineRead")}
                     </Button>
                     <Button
                       variant="outline"
@@ -431,13 +432,13 @@ export default function BookDetailPage() {
                       className="w-full hover:bg-[#21466D]/10 transition-all bg-transparent border-[#21466D]/20 text-[#21466D]"
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      PDF yuklab olish
+                      {t("common.downloadPdf")}
                     </Button>
                   </>
                 ) : (
                   <Button variant="outline" disabled className="w-full bg-gray-100 text-gray-400 cursor-not-allowed">
                     <FileText className="h-4 w-4 mr-2" />
-                    PDF mavjud emas
+                    {t("common.pdfNotAvailable")}
                   </Button>
                 )}
 
@@ -446,7 +447,7 @@ export default function BookDetailPage() {
                   onClick={() => addToCart()}
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
-                  Savatga qo'shish
+                  {t("common.addToCart")}
                 </Button>
               </div>
             </CardContent>
@@ -463,15 +464,23 @@ export default function BookDetailPage() {
                 {book.bookItem?.BookCategoryKafedra && (
                   <>
                     <Badge variant="secondary" className="bg-[#21466D]/10 text-[#21466D]">
-                      {book.bookItem.BookCategoryKafedra.category.name_uz}
+                      {
+                        book.bookItem.BookCategoryKafedra.category[
+                          `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.category
+                        ]
+                      }
                     </Badge>
                     <Badge variant="outline" className="border-[#21466D]/20 text-[#21466D]">
-                      {book.bookItem.BookCategoryKafedra.kafedra.name_uz}
+                      {
+                        book.bookItem.BookCategoryKafedra.kafedra[
+                          `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.kafedra
+                        ]
+                      }
                     </Badge>
                   </>
                 )}
                 <Badge variant="outline" className="border-[#21466D]/20 text-[#21466D]">
-                  {book.year}-yil
+                  {book.year}-{t("common.year")}
                 </Badge>
               </div>
             </CardHeader>
@@ -483,7 +492,7 @@ export default function BookDetailPage() {
           {/* Detailed Information */}
           <Card className="border-[#21466D]/10">
             <CardHeader>
-              <CardTitle className="text-xl text-[#21466D]">Kitob haqida ma'lumot</CardTitle>
+              <CardTitle className="text-xl text-[#21466D]">{t("common.bookInfo")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -491,15 +500,15 @@ export default function BookDetailPage() {
                   <div className="flex items-center gap-3">
                     <User className="h-5 w-5 text-[#21466D]" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Muallif</p>
-                      <p className="font-medium text-[#21466D]">{book.Auther?.name || "Noma'lum"}</p>
+                      <p className="text-sm text-muted-foreground">{t("common.author")}</p>
+                      <p className="font-medium text-[#21466D]">{book.Auther?.name || t("common.unknown")}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
                     <Calendar className="h-5 w-5 text-[#21466D]" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Nashr yili</p>
+                      <p className="text-sm text-muted-foreground">{t("common.publishYear")}</p>
                       <p className="font-medium text-[#21466D]">{book.year}</p>
                     </div>
                   </div>
@@ -507,8 +516,10 @@ export default function BookDetailPage() {
                   <div className="flex items-center gap-3">
                     <BookOpen className="h-5 w-5 text-[#21466D]" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Sahifalar soni</p>
-                      <p className="font-medium text-[#21466D]">{book.page} bet</p>
+                      <p className="text-sm text-muted-foreground">{t("common.pageCount")}</p>
+                      <p className="font-medium text-[#21466D]">
+                        {book.page} {t("common.page")}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -519,9 +530,13 @@ export default function BookDetailPage() {
                       <div className="flex items-center gap-3">
                         <Building className="h-5 w-5 text-[#21466D]" />
                         <div>
-                          <p className="text-sm text-muted-foreground">Kafedra</p>
+                          <p className="text-sm text-muted-foreground">{t("common.department")}</p>
                           <p className="font-medium text-[#21466D]">
-                            {book.bookItem.BookCategoryKafedra.kafedra.name_uz}
+                            {
+                              book.bookItem.BookCategoryKafedra.kafedra[
+                                `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.kafedra
+                              ]
+                            }
                           </p>
                         </div>
                       </div>
@@ -529,9 +544,13 @@ export default function BookDetailPage() {
                       <div className="flex items-center gap-3">
                         <Globe className="h-5 w-5 text-[#21466D]" />
                         <div>
-                          <p className="text-sm text-muted-foreground">Kategoriya</p>
+                          <p className="text-sm text-muted-foreground">{t("common.category")}</p>
                           <p className="font-medium text-[#21466D]">
-                            {book.bookItem.BookCategoryKafedra.category.name_uz}
+                            {
+                              book.bookItem.BookCategoryKafedra.category[
+                                `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.category
+                              ]
+                            }
                           </p>
                         </div>
                       </div>
@@ -541,7 +560,7 @@ export default function BookDetailPage() {
                   <div className="flex items-center gap-3">
                     <Hash className="h-5 w-5 text-[#21466D]" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Kitob ID</p>
+                      <p className="text-sm text-muted-foreground">{t("common.bookId")}</p>
                       <p className="font-medium text-[#21466D]">#{book.id}</p>
                     </div>
                   </div>
@@ -553,21 +572,21 @@ export default function BookDetailPage() {
           {/* Additional Info */}
           <Card className="border-[#21466D]/10">
             <CardHeader>
-              <CardTitle className="text-xl text-[#21466D]">Qo'shimcha ma'lumot</CardTitle>
+              <CardTitle className="text-xl text-[#21466D]">{t("common.additionalInfo")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
                 <div className="p-4 rounded-lg bg-[#21466D]/5">
                   <p className="text-2xl font-bold text-[#21466D]">{book.page}</p>
-                  <p className="text-sm text-muted-foreground">Sahifa</p>
+                  <p className="text-sm text-muted-foreground">{t("common.page")}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-[#21466D]/5">
                   <p className="text-2xl font-bold text-[#21466D]">{book.year}</p>
-                  <p className="text-sm text-muted-foreground">Yil</p>
+                  <p className="text-sm text-muted-foreground">{t("common.year")}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-[#21466D]/5">
                   <p className="text-2xl font-bold text-[#21466D]">{book.book_count}</p>
-                  <p className="text-sm text-muted-foreground">Nusxa</p>
+                  <p className="text-sm text-muted-foreground">{t("common.copies")}</p>
                 </div>
               </div>
             </CardContent>
@@ -583,8 +602,8 @@ export default function BookDetailPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl text-[#21466D]">
                   {book?.bookItem?.BookCategoryKafedra
-                    ? `${book.bookItem.BookCategoryKafedra.category.name_uz} kategoriyasidagi kitoblar`
-                    : "Boshqa kitoblar"}
+                    ? `${book.bookItem.BookCategoryKafedra.category[`name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.category]} ${t("common.relatedBooks")}`
+                    : t("common.relatedBooks")}
                 </CardTitle>
                 <div className="flex gap-2">
                   <Button
@@ -656,13 +675,17 @@ export default function BookDetailPage() {
                                     {truncateBookName(relatedBook.name, 40)}
                                   </h4>
                                   <div className="space-y-1 text-xs text-muted-foreground mb-3 flex-grow">
-                                    <p>{relatedBook.Auther?.name || "Noma'lum"}</p>
+                                    <p>{relatedBook.Auther?.name || t("common.unknown")}</p>
                                     <p>
-                                      {relatedBook.page} bet • {relatedBook.year}
+                                      {relatedBook.page} {t("common.page")} • {relatedBook.year}
                                     </p>
                                     {relatedBook.bookItem?.BookCategoryKafedra && (
                                       <Badge variant="secondary" className="text-xs bg-[#21466D]/10 text-[#21466D]">
-                                        {relatedBook.bookItem.BookCategoryKafedra.category.name_uz}
+                                        {
+                                          relatedBook.bookItem.BookCategoryKafedra.category[
+                                            `name_${i18n.language}` as keyof typeof relatedBook.bookItem.BookCategoryKafedra.category
+                                          ]
+                                        }
                                       </Badge>
                                     )}
                                   </div>

@@ -19,6 +19,7 @@ import {
   Save,
   ChevronRight,
   ArrowLeft,
+  Globe,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -26,6 +27,9 @@ import { useAuthStore } from "@/lib/store/auth"
 import { getUserOrders, getAllBooks, getBookItems } from "@/lib/api"
 import Image from "next/image"
 import { getFullImageUrl } from "@/lib/utils"
+import { useTranslation } from "react-i18next" // i18n import
+
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Order {
   id: string
@@ -110,6 +114,7 @@ interface EnrichedOrder extends Order {
 }
 
 export default function ProfilePage() {
+  const { t, i18n } = useTranslation() // useTranslation hook'ini ishlatish
   const [activeTab, setActiveTab] = useState("buyurtmalar")
   const [mobileView, setMobileView] = useState<"menu" | "content">("menu")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -124,6 +129,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [notification, setNotification] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [currentLanguage, setCurrentLanguage] = useState(i18n.language) // Joriy tilni saqlash
 
   const router = useRouter()
   const [isClient, setIsClient] = useState(false)
@@ -152,7 +158,8 @@ export default function ProfilePage() {
   useEffect(() => {
     setIsClient(true)
     fetchData()
-  }, [])
+    setCurrentLanguage(i18n.language) // Til o'zgarganda state'ni yangilash
+  }, [i18n.language])
 
   const fetchData = async () => {
     try {
@@ -165,13 +172,17 @@ export default function ProfilePage() {
       }
 
       // Fetch all data in parallel
-      const [ordersData, booksData, bookItemsData] = await Promise.all([getUserOrders(), getAllBooks(), getBookItems()]) as any
+      const [ordersData, booksData, bookItemsData] = (await Promise.all([
+        getUserOrders(),
+        getAllBooks(),
+        getBookItems(),
+      ])) as any
       // Filter orders for current user
       const userOrders = ordersData.data.filter((order: Order) => order.user_id === userId)
-
+      console.log(userOrders)
       // Create enriched orders with book details
       const enrichedOrders: EnrichedOrder[] = userOrders.map((order: Order) => {
-        const bookDetail = booksData.find((book: BookDetail) => book.id === order.book_id)
+        const bookDetail = booksData.data.find((book: BookDetail) => book.id === order.book_id)
         const bookItem = bookItemsData.data.find((item: BookItem) => item.book_id === order.book_id)
 
         return {
@@ -183,7 +194,7 @@ export default function ProfilePage() {
 
       setOrders(enrichedOrders)
 
-      // Set profile data from first order's user info
+      // // Set profile data from first order's user info
       if (userOrders.length > 0) {
         const userData = userOrders[0].User
         setProfile({
@@ -195,44 +206,44 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error("Ma'lumotlarni olishda xatolik:", error)
-      toast.error("Ma'lumotlarni olishda xatolik yuz berdi")
+      toast.error(t("common.errorFetchingData"))
     } finally {
       setLoading(false)
     }
   }
 
   const handleSave = () => {
-    showNotification("Ma'lumotlar saqlandi")
+    showNotification(t("common.infoSaved"))
   }
 
   const handleLogout = () => {
     localStorage.removeItem("token")
     localStorage.removeItem("id")
     useAuthStore.getState().clearToken()
-    showNotification("Tizimdan chiqildi")
+    showNotification(t("common.loggedOut"))
     router.push("/login")
   }
 
   const confirmLogout = () => {
-    toast.custom((t) => (
-      <div className="bg-white dark:bg-zinc-900 shadow-xl rounded-lg border border-[#21466D]/20 p-6 w-[340px] animate-in fade-in zoom-in flex flex-col gap-4">
-        <div className="text-lg font-semibold text-[#21466D] dark:text-white">Chiqishni tasdiqlaysizmi?</div>
-        <p className="text-sm text-muted-foreground">Profilingizdan chiqmoqchisiz. Ushbu amal bekor qilinadi.</p>
+    toast.custom((t_toast) => (
+      <div className="bg-white dark:bg-zinc-900 shadow-xl rounded-lg border border-[#21466D]/20 p-6 w-fit animate-in fade-in zoom-in flex flex-col gap-4">
+        <div className="text-lg font-semibold text-[#21466D] dark:text-white">{t("common.confirmLogout")}</div>
+        <p className="text-sm text-muted-foreground">{t("common.logoutMessage")}</p>
         <div className="flex justify-center gap-3 pt-2">
           <button
-            onClick={() => toast.dismiss(t)}
+            onClick={() => toast.dismiss(t_toast)}
             className="px-4 py-2 rounded-lg border border-[#21466D]/20 hover:bg-[#21466D]/10 text-[#21466D] text-sm font-medium transition-all duration-200"
           >
-            Bekor qilish
+            {t("common.cancel")}
           </button>
           <button
             onClick={() => {
               handleLogout()
-              toast.dismiss(t)
+              toast.dismiss(t_toast)
             }}
             className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 text-sm font-medium transition-all duration-200"
           >
-            Ha, chiqish
+            {t("common.yesLogout")}
           </button>
         </div>
       </div>
@@ -267,11 +278,17 @@ export default function ProfilePage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("uz-UZ", {
+    return new Date(dateString).toLocaleDateString(i18n.language === "uz" ? "uz-UZ" : "ru-RU", {
       year: "numeric",
       month: "long",
       day: "numeric",
     })
+  }
+
+  const handleLanguageChange = (lang: string) => {
+    i18n.changeLanguage(lang)
+    setCurrentLanguage(lang)
+    localStorage.setItem("i18nextLng", lang) // Tilni localStorage'da saqlash
   }
 
   const renderOrderCard = (order: EnrichedOrder) => {
@@ -288,18 +305,18 @@ export default function ProfilePage() {
           <div className="p-4 border-b border-[#21466D]/10">
             <div className="flex justify-between items-start mb-3">
               <h3 className="text-lg font-semibold max-md:text-md text-[#21466D] dark:text-white">
-                Buyurtma #{order.id}
+                {t("common.order")} #{order.id}
               </h3>
               <Badge
                 className={`text-xs text-white w-fit max-md:text-[12px] flex justify-center items-center text-center ${getStatusColor(order.status_id)}`}
               >
-                {order.status_message}
+                {t(`common.status.${order.status_id}`)}
               </Badge>
             </div>
 
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-20">
               <Image
-                src={imageUrl || "/placeholder.svg"}
+                src={(imageUrl as string) || "/placeholder.svg"}
                 alt={order.Book.name}
                 width={60}
                 height={80}
@@ -310,10 +327,10 @@ export default function ProfilePage() {
                 {order.bookDetail && (
                   <>
                     <p className="text-sm text-muted-foreground">
-                      Muallif: {order.bookDetail.Auther?.name || "Noma'lum"}
+                      {t("common.author")}: {order.bookDetail.Auther?.name || t("common.unknown")}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {order.bookDetail.year}-yil • {order.bookDetail.page} bet
+                      {order.bookDetail.year}-{t("common.year")} • {order.bookDetail.page} {t("common.page")}
                     </p>
                   </>
                 )}
@@ -327,7 +344,7 @@ export default function ProfilePage() {
               <div className="flex items-start gap-2">
                 <Calendar className="h-4 w-4 text-[#21466D]/60 mt-0.5" />
                 <div>
-                  <span className="text-muted-foreground">Buyurtma sanasi:</span>
+                  <span className="text-muted-foreground">{t("common.orderDate")}:</span>
                   <p className="font-medium text-[#21466D] dark:text-white">{formatDate(order.created_at)}</p>
                 </div>
               </div>
@@ -336,7 +353,7 @@ export default function ProfilePage() {
                 <div className="flex items-start gap-2">
                   <Calendar className="h-4 w-4 text-green-600 mt-0.5" />
                   <div>
-                    <span className="text-muted-foreground">Olingan sana:</span>
+                    <span className="text-muted-foreground">{t("common.takenDate")}:</span>
                     <p className="font-medium text-green-600">{formatDate(order.taking_at)}</p>
                   </div>
                 </div>
@@ -346,7 +363,7 @@ export default function ProfilePage() {
                 <div className="flex items-start gap-2">
                   <Calendar className="h-4 w-4 text-gray-600 mt-0.5" />
                   <div>
-                    <span className="text-muted-foreground">Topshirilgan sana:</span>
+                    <span className="text-muted-foreground">{t("common.returnedDate")}:</span>
                     <p className="font-medium text-gray-600">{formatDate(order.finished_at)}</p>
                   </div>
                 </div>
@@ -354,7 +371,7 @@ export default function ProfilePage() {
 
               {order.book_code && (
                 <div className="text-sm">
-                  <span className="text-muted-foreground">Izoh:</span>
+                  <span className="text-muted-foreground">{t("common.note")}:</span>
                   <span className="ml-2 font-medium text-[#21466D] dark:text-white">{order.book_code}</span>
                 </div>
               )}
@@ -367,10 +384,18 @@ export default function ProfilePage() {
                     {order.bookItem.BookCategoryKafedra && (
                       <>
                         <Badge variant="secondary" className="text-xs bg-[#21466D]/10 text-[#21466D]">
-                          {order.bookItem.BookCategoryKafedra.category.name_uz}
+                          {
+                            order.bookItem.BookCategoryKafedra.category[
+                              `name_${i18n.language}` as keyof typeof order.bookItem.BookCategoryKafedra.category
+                            ]
+                          }
                         </Badge>
                         <Badge variant="outline" className="text-xs border-[#21466D]/20 text-[#21466D]">
-                          {order.bookItem.BookCategoryKafedra.kafedra.name_uz}
+                          {
+                            order.bookItem.BookCategoryKafedra.kafedra[
+                              `name_${i18n.language}` as keyof typeof order.bookItem.BookCategoryKafedra.kafedra
+                            ]
+                          }
                         </Badge>
                       </>
                     )}
@@ -384,7 +409,7 @@ export default function ProfilePage() {
                 onClick={() => toggleOrderExpansion(order.id)}
                 className="text-[#21466D]/60 hover:text-[#21466D] hover:bg-[#21466D]/10"
               >
-                Batafsil
+                {t("common.moreDetails")}
                 {isExpanded ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
               </Button>
             </div>
@@ -393,21 +418,21 @@ export default function ProfilePage() {
           {/* Expanded Details */}
           {isExpanded && (
             <div className="border-t border-[#21466D]/10 bg-[#21466D]/5 p-4">
-              <h4 className="font-medium mb-3 text-[#21466D] dark:text-white">Kitob haqida:</h4>
+              <h4 className="font-medium mb-3 text-[#21466D] dark:text-white">{t("common.aboutBook")}:</h4>
               {order.bookDetail && (
                 <div className="space-y-3">
                   <div className="p-3 bg-background rounded-lg border border-[#21466D]/10">
-                    <p className="text-sm text-muted-foreground mb-2">Tavsif:</p>
+                    <p className="text-sm text-muted-foreground mb-2">{t("common.description")}:</p>
                     <p className="text-sm">{order.bookDetail.description}</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 bg-background rounded-lg border border-[#21466D]/10">
-                      <p className="text-xs text-muted-foreground">Kitoblar soni</p>
+                      <p className="text-xs text-muted-foreground">{t("common.booksCount")}</p>
                       <p className="font-medium text-[#21466D]">{order.bookDetail.books}</p>
                     </div>
                     <div className="p-3 bg-background rounded-lg border border-[#21466D]/10">
-                      <p className="text-xs text-muted-foreground">Mavjud</p>
+                      <p className="text-xs text-muted-foreground">{t("common.available")}</p>
                       <p className="font-medium text-[#21466D]">{order.bookDetail.book_count}</p>
                     </div>
                   </div>
@@ -418,7 +443,7 @@ export default function ProfilePage() {
                       className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white"
                     >
                       <BookOpen className="h-4 w-4 mr-2" />
-                      PDF ni ochish
+                      {t("common.openPdf")}
                     </Button>
                   )}
                 </div>
@@ -431,9 +456,9 @@ export default function ProfilePage() {
   }
 
   const menuItems = [
-    { id: "buyurtmalar", label: "Buyurtmalarim", icon: ShoppingBag, count: activeOrders.length },
-    { id: "arxiv", label: "Arxiv", icon: Archive, count: archivedOrders.length },
-    { id: "malumotlar", label: "Ma'lumotlarim", icon: User },
+    { id: "buyurtmalar", label: t("common.activeOrders"), icon: ShoppingBag, count: activeOrders.length },
+    { id: "arxiv", label: t("common.archivedOrders"), icon: Archive, count: archivedOrders.length },
+    { id: "malumotlar", label: t("common.personalInfo"), icon: User },
   ]
 
   const renderMobileMenu = () => (
@@ -442,7 +467,7 @@ export default function ProfilePage() {
         <div className="w-20 h-20 bg-[#21466D]/10 rounded-full flex items-center justify-center mx-auto mb-3">
           <User className="h-10 w-10 text-[#21466D]" />
         </div>
-        <h2 className="text-xl font-semibold text-[#21466D]">{profile.fullName || "Foydalanuvchi"}</h2>
+        <h2 className="text-xl font-semibold text-[#21466D]">{profile.fullName || t("common.profile")}</h2>
         <p className="text-sm text-muted-foreground">{profile.phone}</p>
       </div>
 
@@ -466,7 +491,9 @@ export default function ProfilePage() {
                   <div>
                     <h3 className="font-medium text-[#21466D]">{item.label}</h3>
                     {item.count !== undefined && (
-                      <p className="text-sm text-muted-foreground">{item.count} ta element</p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.count} {t("common.elementCount", { count: item.count })}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -485,8 +512,8 @@ export default function ProfilePage() {
                 <LogOut className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <h3 className="font-medium text-red-600">Tizimdan chiqish</h3>
-                <p className="text-sm text-red-400">Hisobdan chiqish</p>
+                <h3 className="font-medium text-red-600">{t("common.logoutFromSystem")}</h3>
+                <p className="text-sm text-red-400">{t("common.logout")}</p>
               </div>
             </div>
             <ChevronRight className="h-5 w-5 text-red-400" />
@@ -502,7 +529,7 @@ export default function ProfilePage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <BookOpen className="mx-auto h-12 w-12 text-[#21466D]/40 mb-4 animate-pulse" />
-            <p className="text-muted-foreground">Ma'lumotlar yuklanmoqda...</p>
+            <p className="text-muted-foreground">{t("common.loadingData")}</p>
           </div>
         </div>
       )
@@ -516,11 +543,11 @@ export default function ProfilePage() {
               {isMobile && (
                 <Button variant="ghost" size="sm" onClick={() => setMobileView("menu")} className="text-[#21466D]">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Orqaga
+                  {t("common.back")}
                 </Button>
               )}
               <h2 className="text-2xl font-semibold text-[#21466D] dark:text-white">
-                Faol Buyurtmalar ({activeOrders.length})
+                {t("common.activeOrders")} ({activeOrders.length})
               </h2>
             </div>
             <div className="space-y-4">
@@ -530,7 +557,7 @@ export default function ProfilePage() {
                 <Card className="border-[#21466D]/10">
                   <CardContent className="p-8 text-center">
                     <BookOpen className="mx-auto h-12 w-12 text-[#21466D]/40 mb-4" />
-                    <p className="text-muted-foreground">Hozircha faol buyurtmalar yo'q</p>
+                    <p className="text-muted-foreground">{t("common.noActiveOrders")}</p>
                   </CardContent>
                 </Card>
               )}
@@ -545,10 +572,12 @@ export default function ProfilePage() {
               {isMobile && (
                 <Button variant="ghost" size="sm" onClick={() => setMobileView("menu")} className="text-[#21466D]">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Orqaga
+                  {t("common.back")}
                 </Button>
               )}
-              <h2 className="text-2xl font-semibold text-[#21466D] dark:text-white">Arxiv ({archivedOrders.length})</h2>
+              <h2 className="text-2xl font-semibold text-[#21466D] dark:text-white">
+                {t("common.archivedOrders")} ({archivedOrders.length})
+              </h2>
             </div>
             <div className="space-y-4">
               {archivedOrders.length > 0 ? (
@@ -557,7 +586,7 @@ export default function ProfilePage() {
                 <Card className="border-[#21466D]/10">
                   <CardContent className="p-8 text-center">
                     <Archive className="mx-auto h-12 w-12 text-[#21466D]/40 mb-4" />
-                    <p className="text-muted-foreground">Arxivda hech narsa yo'q</p>
+                    <p className="text-muted-foreground">{t("common.noArchivedOrders")}</p>
                   </CardContent>
                 </Card>
               )}
@@ -580,11 +609,11 @@ export default function ProfilePage() {
                 {isMobile && (
                   <Button variant="ghost" size="sm" onClick={() => setMobileView("menu")} className="text-[#21466D]">
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Orqaga
+                    {t("common.back")}
                   </Button>
                 )}
                 <CardTitle className="text-[#21466D] dark:text-white">
-                  <User className="inline mr-2" /> Shaxsiy Ma'lumotlar
+                  <User className="inline mr-2" /> {t("common.personalInfo")}
                 </CardTitle>
               </div>
             </CardHeader>
@@ -592,7 +621,7 @@ export default function ProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="fullName" className="text-[#21466D] dark:text-white font-medium">
-                    F.I.Sh
+                    {t("common.fullName")}
                   </Label>
                   <Input
                     id="fullName"
@@ -603,7 +632,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="text-[#21466D] dark:text-white font-medium">
-                    Telefon
+                    {t("common.phone")}
                   </Label>
                   <Input
                     id="phone"
@@ -614,7 +643,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="direction" className="text-[#21466D] dark:text-white font-medium">
-                    Yo'nalishi
+                    {t("common.direction")}
                   </Label>
                   <Input
                     id="direction"
@@ -626,7 +655,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="group" className="text-[#21466D] dark:text-white font-medium">
-                    Guruh
+                    {t("common.group")}
                   </Label>
                   <Input
                     id="group"
@@ -636,6 +665,25 @@ export default function ProfilePage() {
                     className="border-[#21466D]/20 focus:border-[#21466D] focus:ring-[#21466D]/20"
                   />
                 </div>
+                {/* Tilni o'zgartirish bo'limi */}
+                <div className="space-y-2">
+                  <Label htmlFor="language-select" className="text-[#21466D] dark:text-white font-medium">
+                    {t("common.language")}
+                  </Label>
+                  <Select value={currentLanguage} onValueChange={handleLanguageChange}>
+                    <SelectTrigger
+                      id="language-select"
+                      className="border-[#21466D]/20 focus:border-[#21466D] focus:ring-[#21466D]/20"
+                    >
+                      <Globe className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder={t("common.changeLanguage")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="uz">O'zbekcha</SelectItem>
+                      <SelectItem value="ru">Русский</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-[#21466D]/10">
                 <Button
@@ -643,7 +691,7 @@ export default function ProfilePage() {
                   className="bg-[#21466D] hover:bg-[#21466D]/90 text-white flex-1 h-12 font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
                 >
                   <Save className="h-5 w-5 mr-2" />
-                  Ma'lumotlarni Saqlash
+                  {t("common.saveInfo")}
                 </Button>
                 <Button
                   onClick={confirmLogout}
@@ -651,7 +699,7 @@ export default function ProfilePage() {
                   className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 hover:text-red-700 flex-1 h-12 font-semibold text-base transition-all duration-300 hover:scale-[1.02] dark:border-red-800 dark:hover:bg-red-900/20 bg-transparent"
                 >
                   <LogOut className="h-5 w-5 mr-2" />
-                  Tizimdan Chiqish
+                  {t("common.logoutFromSystem")}
                 </Button>
               </div>
             </CardContent>
@@ -670,7 +718,9 @@ export default function ProfilePage() {
       {/* Desktop Header */}
       {!isMobile && (
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-[#21466D] dark:text-white">{profile.fullName || "Foydalanuvchi"}</h1>
+          <h1 className="text-3xl font-bold text-[#21466D] dark:text-white">
+            {profile.fullName || t("common.profile")}
+          </h1>
           <Button
             variant="outline"
             size="sm"
@@ -687,7 +737,9 @@ export default function ProfilePage() {
         <div>
           {mobileView === "menu" ? (
             <div>
-              <h1 className="text-2xl font-bold text-[#21466D] dark:text-white mb-6 text-center">Profil</h1>
+              <h1 className="text-2xl font-bold text-[#21466D] dark:text-white mb-6 text-center">
+                {t("common.profile")}
+              </h1>
               {renderMobileMenu()}
             </div>
           ) : (

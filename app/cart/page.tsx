@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,14 +8,17 @@ import { Badge } from "@/components/ui/badge"
 import { Trash2, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { postUserOrder } from "@/lib/api"
+import { postUserOrder, getUserOrders } from "@/lib/api" // getUserOrders import qilindi
 import { getFullImageUrl } from "@/lib/utils"
 import { useRouter } from "next/navigation"
+import { useTranslation } from "react-i18next" // i18n import
 
 export default function CartPage() {
+  const { t, i18n } = useTranslation() // useTranslation hook'ini ishlatish
   const [cartItems, setCartItems] = useState<any[]>([])
   const [selectedItems, setSelectedItems] = useState<number[]>([])
   const [isClient, setIsClient] = useState(false)
+  const [isLoadingOrder, setIsLoadingOrder] = useState(false) // Yangi loading holati
   const router = useRouter()
 
   useEffect(() => {
@@ -29,14 +31,14 @@ export default function CartPage() {
   }, [])
 
   const truncateDescription = (text: string, maxLength = 30) => {
-    if (!text) return "Tavsif mavjud emas"
+    if (!text) return t("common.descriptionNotAvailable")
     if (text.length <= maxLength) return text
     return text.slice(0, maxLength) + "..."
   }
 
   const handleCardClick = (bookId: number, e: React.MouseEvent) => {
     // Prevent navigation if clicking on checkbox or delete button
-    const target = e.target as HTMLElement
+    const target = e.target as any
     if (target.type === "checkbox" || target.closest("button")) {
       return
     }
@@ -61,16 +63,42 @@ export default function CartPage() {
     setSelectedItems((prev) => prev.filter((id) => id !== bookId))
     localStorage.setItem("cart", JSON.stringify(updatedCart))
     window.dispatchEvent(new Event("storage"))
-    toast.success("Kitob savatdan o'chirildi")
+    toast.success(t("common.bookRemovedFromCart"))
   }
 
   const placeOrder = async () => {
     if (selectedItems.length === 0) {
-      toast.warning("Iltimos, kamida bitta kitobni tanlang")
+      toast.warning(t("common.selectAtLeastOneBook"))
+      return
+    }
+
+    setIsLoadingOrder(true) // Loadingni yoqish
+    const userId = localStorage.getItem("id") // Foydalanuvchi ID sini olish
+
+    if (!userId) {
+      toast.warning(t("common.loginRequired"))
+      router.push("/login")
+      setIsLoadingOrder(false)
       return
     }
 
     try {
+      const userOrdersResponse = await getUserOrders() as any
+      const userOrders = userOrdersResponse.data || []
+
+      // Tanlangan kitoblarni avval buyurtma qilinganmi tekshirish
+      for (const selectedBookId of selectedItems) {
+        const alreadyOrdered = userOrders.some(
+          (order: any) => order.user_id === userId && order.book_id === selectedBookId,
+        )
+        if (alreadyOrdered) {
+          const bookName = cartItems.find((item) => item.id === selectedBookId)?.name || selectedBookId
+          toast.warning(t("common.bookAlreadyOrdered", { bookName: bookName }))
+          setIsLoadingOrder(false)
+          return // Agar bitta kitob ham avval buyurtma qilingan bo'lsa, jarayonni to'xtatish
+        }
+      }
+
       // Har bir tanlangan kitob uchun post yuboramiz
       await Promise.all(
         selectedItems.map(async (bookId) => {
@@ -84,9 +112,12 @@ export default function CartPage() {
       setSelectedItems([])
       localStorage.setItem("cart", JSON.stringify(remainingCart))
       window.dispatchEvent(new Event("storage"))
-      toast.success("Buyurtma muvaffaqiyatli qabul qilindi")
+      toast.success(t("common.orderPlacedSuccessfully"))
     } catch (err) {
-      toast.error("Buyurtma yuborishda xatolik yuz berdi")
+      console.error("Buyurtma berishda yoki buyurtmalarni tekshirishda xatolik:", err)
+      toast.error(t("common.errorPlacingOrder"))
+    } finally {
+      setIsLoadingOrder(false) // Loadingni o'chirish
     }
   }
 
@@ -95,7 +126,7 @@ export default function CartPage() {
     setSelectedItems([])
     localStorage.setItem("cart", JSON.stringify([]))
     window.dispatchEvent(new Event("storage"))
-    toast.success("Savat tozalandi")
+    toast.success(t("common.cartCleared"))
   }
 
   if (!isClient) return null
@@ -105,10 +136,10 @@ export default function CartPage() {
       <div className="container mx-auto px-4 py-8 mt-10">
         <div className="text-center animate-fade-in">
           <ShoppingBag className="h-24 w-24 mx-auto mb-4 text-muted-foreground" />
-          <h1 className="text-3xl font-bold mb-2 text-[#21466D]">Savat bo'sh</h1>
-          <p className="text-muted-foreground mb-8">Hozircha savatda hech qanday kitob yo'q</p>
+          <h1 className="text-3xl font-bold mb-2 text-[#21466D]">{t("common.cartEmpty")}</h1>
+          <p className="text-muted-foreground mb-8">{t("common.noBooksInCart")}</p>
           <Link href="/">
-            <Button className="bg-[#21466D] text-white hover:bg-[#21466D]/90">Kitoblarni ko'rish</Button>
+            <Button className="bg-[#21466D] text-white hover:bg-[#21466D]/90">{t("common.viewBooks")}</Button>
           </Link>
         </div>
       </div>
@@ -119,7 +150,7 @@ export default function CartPage() {
     <div className="container mx-auto px-4 py-8 mt-10">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 className="text-3xl font-bold text-[#21466D]">Savat</h1>
+          <h1 className="text-3xl font-bold text-[#21466D]">{t("common.cart")}</h1>
           <div className="flex justify-center items-center gap-5 p-5">
             <input
               type="checkbox"
@@ -127,12 +158,12 @@ export default function CartPage() {
               onChange={toggleSelectAll}
               className="accent-[#21466D] w-5 h-5"
             />
-            <p className="text-sm text-[#21466D]">Barchasini tanlash</p>
+            <p className="text-sm text-[#21466D]">{t("common.selectAll")}</p>
           </div>
         </div>
         <div className="flex gap-2">
           <Button variant="destructive" onClick={clearCart}>
-            Savatni tozalash
+            {t("common.clearCart")}
           </Button>
         </div>
       </div>
@@ -167,21 +198,35 @@ export default function CartPage() {
                   </h3>
                   <p
                     className="text-sm text-gray-600 mb-1 cursor-pointer"
-                    title={book.description || "Tavsif mavjud emas"}
+                    title={book.description || t("common.descriptionNotAvailable")}
                   >
                     {truncateDescription(book.description)}
                   </p>
                   <div className="space-y-1 text-sm text-muted-foreground mb-4">
-                    <p>{book.page || book.pages} bet</p>
-                    <p>{book.year}-yil</p>
-                    <p className="text-xs text-[#21466D]">Muallif: {book.Auther?.name || "Noma'lum"}</p>
+                    <p>
+                      {book.page || book.pages} {t("common.page")}
+                    </p>
+                    <p>
+                      {book.year}-{t("common.year")}
+                    </p>
+                    <p className="text-xs text-[#21466D]">
+                      {t("common.author")}: {book.Auther?.name || t("common.unknown")}
+                    </p>
                     {book.bookItem?.BookCategoryKafedra && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         <Badge variant="secondary" className="text-xs bg-[#21466D]/10 text-[#21466D]">
-                          {book.bookItem.BookCategoryKafedra.category.name_uz}
+                          {
+                            book.bookItem.BookCategoryKafedra.category[
+                              `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.category
+                            ]
+                          }
                         </Badge>
                         <Badge variant="outline" className="text-xs border-[#21466D]/20 text-[#21466D]">
-                          {book.bookItem.BookCategoryKafedra.kafedra.name_uz}
+                          {
+                            book.bookItem.BookCategoryKafedra.kafedra[
+                              `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.kafedra
+                            ]
+                          }
                         </Badge>
                       </div>
                     )}
@@ -206,23 +251,26 @@ export default function CartPage() {
         <div className="lg:col-span-1">
           <Card className="sticky top-24 animate-scale-in">
             <CardHeader>
-              <CardTitle>Buyurtma xulosasi</CardTitle>
+              <CardTitle>{t("common.orderSummary")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between">
-                <span>Tanlangan kitoblar:</span>
-                <span className="font-semibold">{selectedItems.length} ta</span>
+                <span>{t("common.selectedBooks")}:</span>
+                <span className="font-semibold">
+                  {selectedItems.length} {t("common.countUnit")}
+                </span>
               </div>
               <div className="border-t pt-4">
                 <Button
                   onClick={placeOrder}
+                  disabled={isLoadingOrder || selectedItems.length === 0} // Loading holatida va kitob tanlanmaganda o'chirish
                   className="px-8 py-6 w-full text-white hover:!bg-white hover:text-[#21466D]"
                   style={{
                     border: "1px solid",
                     backgroundColor: "#21466D",
                   }}
                 >
-                  Buyurtma berish
+                  {isLoadingOrder ? t("common.placingOrder") : t("common.placeOrder")} {/* Loading matni */}
                 </Button>
               </div>
             </CardContent>

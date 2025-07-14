@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
@@ -15,9 +13,68 @@ import { toast } from "sonner"
 import { usePathname } from "next/navigation"
 import { getAllBooks } from "@/lib/api"
 import { getFullImageUrl } from "@/lib/utils"
+import { useTranslation } from "react-i18next" // i18n import
 
+interface BookData {
+  id: string
+  name: string
+  author_id: string | null
+  year: number
+  page: number
+  books: number
+  book_count: number
+  description: string
+  image_id: string
+  createdAt: string
+  updatedAt: string
+  auther_id: string
+  Auther: {
+    id: string
+    name: string
+  }
+  image: {
+    id: string
+    url: string
+  }
+}
 
+interface BookItem {
+  id: string
+  book_id: string
+  language_id: string
+  alphabet_id: string
+  status_id: number
+  pdf_id: string
+  createdAt: string
+  updatedAt: string
+  kafedra_id: string | null
+  PDFFile: {
+    id: string
+    file_url: string
+    original_name: string
+    file_size: number
+  }
+  BookCategoryKafedra: {
+    category_id: string
+    kafedra_id: string
+    category: {
+      id: string
+      name_uz: string
+      name_ru: string
+    }
+    kafedra: {
+      id: string
+      name_uz: string
+      name_ru: string
+    }
+  }
+}
+
+interface EnrichedBook extends BookData {
+  bookItem?: BookItem
+}
 export default function Navbar() {
+  const { t, i18n } = useTranslation() // useTranslation hook'ini ishlatish
   const { token } = useAuthStore()
   const [cartCount, setCartCount] = useState(0)
   const [mounted, setMounted] = useState(false)
@@ -29,27 +86,28 @@ export default function Navbar() {
   const [selectedDirections, setSelectedDirections] = useState<string[]>([])
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([])
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
-  const [filteredBooks, setFilteredBooks] = useState([])
-  const [allboks ,setbooks] = useState([])
+  const [filteredBooks, setFilteredBooks] = useState<EnrichedBook[]>([])
+  const [allboks, setbooks] = useState<EnrichedBook[]>([])
   // UI states
   const [showSearch, setShowSearch] = useState(false)
   const [showDropdown, setShowDropdown] = useState<string | null>(null)
   const [showBooksPanel, setShowBooksPanel] = useState(false)
   const [showMobileSearch, setShowMobileSearch] = useState(false)
-  useEffect(()=>{
-      const allbooks = async ()=>{
-          const books = await getAllBooks()
-          setbooks(books)
-          return books
-      }
-      allbooks()
-  },[])
+  useEffect(() => {
+    const allbooks = async () => {
+      const books = (await getAllBooks()) as any
+      setbooks(books.data)
+      console.log(books.data)
+      return books
+    }
+    allbooks()
+  }, [])
   // Filter books based on selected criteria
   useEffect(() => {
     const filtered = allboks.filter((book) => {
       const matchesSearch = book.name.toLowerCase().includes(searchTerm.toLowerCase())
 
-      return matchesSearch 
+      return matchesSearch
     })
 
     setFilteredBooks(filtered)
@@ -63,36 +121,36 @@ export default function Navbar() {
     setShowBooksPanel(hasFilters)
   }, [searchTerm, selectedDirections, selectedDepartments, selectedTopics])
 
-const panelRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
-useEffect(() => {
-  function handleClickOutside(event: MouseEvent) {
-    if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-      setShowBooksPanel(false)
-      setSearchTerm("")
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        setShowBooksPanel(false)
+        setSearchTerm("")
+      }
     }
-  }
 
-  if (showBooksPanel) {
-    document.addEventListener("mousedown", handleClickOutside)
-  }
+    if (showBooksPanel) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
 
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside)
-  }
-}, [showBooksPanel])
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [showBooksPanel])
 
-useEffect(() => {
-  if (showBooksPanel) {
-    document.body.style.overflow = "hidden"
-  } else {
-    document.body.style.overflow = ""
-  }
+  useEffect(() => {
+    if (showBooksPanel) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
 
-  return () => {
-    document.body.style.overflow = ""
-  }
-}, [showBooksPanel])
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [showBooksPanel])
 
   useEffect(() => {
     setIsClient(true)
@@ -109,7 +167,6 @@ useEffect(() => {
     return () => window.removeEventListener("storage", handleStorageChange)
   }, [])
 
-  
   const clearAllFilters = () => {
     setSearchTerm("")
     setSelectedDirections([])
@@ -148,7 +205,7 @@ useEffect(() => {
             <Search className="absolute left-10 w-5 h-5" />
             <Input
               type="text"
-              placeholder="Kitoblarni qidirish..."
+              placeholder={t("common.searchBooks")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="flex-1 outline-none focus:border-none px-10 focus:outline-none focus:ring-0 w-[50%] py-6"
@@ -167,45 +224,48 @@ useEffect(() => {
 
             {showBooksPanel && (
               <>
-              <div
-            className="fixed top-[108px] left-0 right-0 bottom-0 z-20 backdrop-brightness-50"
-      onClick={() => clearAllFilters()} // tashqariga bosganda yopish
-    />
-              <div ref={panelRef} className="absolute top-[75px] w-[92.4%] max-h-[400px] z-30 bg-white border shadow-lg overflow-y-auto rounded-md">
-                <div className="p-4 space-y-3">
-                  <h3 className="text-sm font-semibold flex justify-between items-center text-[#21466D]">
-                    <span>Natijalar ({filteredBooks.length})</span>
-                    <span className="cursor-pointer hover:underline" onClick={() => clearAllFilters()}>
-                      Yopish
-                    </span>
-                  </h3>
-                  {filteredBooks.map((book) => (
-                    <Link
-                      href={`/book/${book.id}`}
-                      onClick={() => clearAllFilters()}
-                      key={book.id}
-                      className="border-b border-gray-200 py-3 flex items-start gap-4 hover:bg-gray-50 transition"
-                    >
-                      <Image
-                        src={ book.image?.image_url
-    ? getFullImageUrl(book.image.image_url)
-    : "/placeholder.svg"}
-                        alt={book.name}
-                        width={60}
-                        height={90}
-                        className="rounded-md object-cover flex-shrink-0"
-                      />
-                      <div className="flex-1">
-                        <h4 className="text-base font-semibold text-[#21466D] line-clamp-1">{book.name}</h4>
-                        <p className="text-sm text-[#21466D]/70 line-clamp-2">{book.description }</p>
-                      </div>
-                    </Link>
-                  ))}
-                  {filteredBooks.length === 0 && (
-                    <div className="text-center text-[#21466D]/60 text-sm">Hech narsa topilmadi</div>
-                  )}
+                <div
+                  className="fixed top-[108px] left-0 right-0 bottom-0 z-20 backdrop-brightness-50"
+                  onClick={() => clearAllFilters()} // tashqariga bosganda yopish
+                />
+                <div
+                  ref={panelRef}
+                  className="absolute top-[75px] w-[92.4%] max-h-[400px] z-30 bg-white border shadow-lg overflow-y-auto rounded-md"
+                >
+                  <div className="p-4 space-y-3">
+                    <h3 className="text-sm font-semibold flex justify-between items-center text-[#21466D]">
+                      <span>
+                        {t("common.results")} ({filteredBooks.length})
+                      </span>
+                      <span className="cursor-pointer hover:underline" onClick={() => clearAllFilters()}>
+                        {t("common.close")}
+                      </span>
+                    </h3>
+                    {filteredBooks.map((book) => (
+                      <Link
+                        href={`/book/${book.id}`}
+                        onClick={() => clearAllFilters()}
+                        key={book.id}
+                        className="border-b border-gray-200 py-3 flex items-start gap-4 hover:bg-gray-50 transition"
+                      >
+                        <Image
+                          src={book.image?.url ? getFullImageUrl(book.image.url) : "/placeholder.svg"}
+                          alt={book.name}
+                          width={60}
+                          height={90}
+                          className="rounded-md object-cover flex-shrink-0"
+                        />
+                        <div className="flex-1">
+                          <h4 className="text-base font-semibold text-[#21466D] line-clamp-1">{book.name}</h4>
+                          <p className="text-sm text-[#21466D]/70 line-clamp-2">{book.description}</p>
+                        </div>
+                      </Link>
+                    ))}
+                    {filteredBooks.length === 0 && (
+                      <div className="text-center text-[#21466D]/60 text-sm">{t("common.noResultsFound")}</div>
+                    )}
+                  </div>
                 </div>
-              </div>
               </>
             )}
           </div>
@@ -224,7 +284,7 @@ useEffect(() => {
               style={{ border: "1px solid ", backgroundColor: "#21466D" }}
             >
               <Layers />
-              Katalog
+              {t("common.catalog")}
             </Button>
           </Link>
 
@@ -240,7 +300,7 @@ useEffect(() => {
                     style={{ border: "1px solid #21466D", backgroundColor: "transparent" }}
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />
-                    Savat
+                    {t("common.cart")}
                     {cartCount > 0 && (
                       <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex justify-center items-center primary-gradient">
                         {cartCount}
@@ -260,14 +320,14 @@ useEffect(() => {
               </>
             ) : (
               <Link href="/login">
-                 <Button
+                <Button
                   size="sm"
                   variant="outline"
-                    className="relative !bg-[#21466D] hover:!bg-[white] hover:text-[#21466D] px-8 py-6 animate-scale-in text-white bg-transparent"
+                  className="relative !bg-[#21466D] hover:!bg-[white] hover:text-[#21466D] px-8 py-6 animate-scale-in text-white bg-transparent"
                   style={{ border: "1px solid #21466D", backgroundColor: "transparent" }}
                 >
                   <LogIn className="h-4 w-4 mr-2" />
-                  Kirish
+                  {t("common.login")}
                 </Button>
               </Link>
             )}
@@ -283,7 +343,7 @@ useEffect(() => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 type="text"
-                placeholder="Kitoblarni qidirish..."
+                placeholder={t("common.searchBooks")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-10 py-3"
@@ -302,11 +362,12 @@ useEffect(() => {
             {showBooksPanel && (
               <div className="mt-4 max-h-[300px] overflow-y-auto">
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-[#21466D]">Natijalar ({filteredBooks.length})</h3>
+                  <h3 className="text-sm font-semibold text-[#21466D]">
+                    {t("common.results")} ({filteredBooks.length})
+                  </h3>
                   {filteredBooks.slice(0, 5).map((book) => (
                     <Link
                       href={`/book/${book.id}`}
-                      onClick={() => clearAllFilters()}
                       key={book.id}
                       className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-md transition"
                     >
@@ -324,7 +385,7 @@ useEffect(() => {
                     </Link>
                   ))}
                   {filteredBooks.length === 0 && (
-                    <div className="text-center text-[#21466D]/60 text-sm py-4">Hech narsa topilmadi</div>
+                    <div className="text-center text-[#21466D]/60 text-sm py-4">{t("common.noResultsFound")}</div>
                   )}
                 </div>
               </div>
@@ -342,7 +403,7 @@ useEffect(() => {
             className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
           >
             <BookAIcon />
-            <span className="text-xs font-semibold">Kitoblar</span>
+            <span className="text-xs font-semibold">{t("common.books")}</span>
           </Button>
         </Link>
 
@@ -353,7 +414,7 @@ useEffect(() => {
             className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
           >
             <Layers className="h-5 w-5" />
-            <span className="text-xs font-semibold">Katalog</span>
+            <span className="text-xs font-semibold">{t("common.catalog")}</span>
           </Button>
         </Link>
 
@@ -364,7 +425,7 @@ useEffect(() => {
             className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
           >
             <ShoppingCart className="h-5 w-5" />
-            <span>Savat</span>
+            <span>{t("common.cart")}</span>
           </Button>
           {cartCount > 0 && (
             <Badge className="absolute top-1 right-2 h-5 w-5 p-0 text-xs flex justify-center items-center primary-gradient">
@@ -382,7 +443,7 @@ useEffect(() => {
                 className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
               >
                 <User className="h-5 w-5" />
-                <span>Profil</span>
+                <span>{t("common.profile")}</span>
               </Button>
             </Link>
             <div className="flex-1 px-1">
@@ -393,14 +454,14 @@ useEffect(() => {
                 onClick={() => {
                   localStorage.removeItem("userId")
                   localStorage.removeItem("cart")
-                  toast.success("Tizimdan chiqildi", {
+                  toast.success(t("common.loggedOut"), {
                     position: "top-center",
                   })
                   window.location.href = "/login"
                 }}
               >
                 <LogOut className="h-5 w-5" />
-                <span>Chiqish</span>
+                <span>{t("common.logout")}</span>
               </Button>
             </div>
           </>
@@ -412,7 +473,7 @@ useEffect(() => {
               className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
             >
               <LogIn className="h-5 w-5" />
-              <span>Kirish</span>
+              <span>{t("common.login")}</span>
             </Button>
           </Link>
         )}

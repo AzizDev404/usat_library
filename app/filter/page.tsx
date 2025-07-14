@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink } from "@/components/ui/pagination"
 import { getAllBooks, getBookItems, getCategories, getKafedras } from "@/lib/api"
 import { getFullImageUrl, isBookNew } from "@/lib/utils"
+import { useTranslation } from "react-i18next" // i18n import
 
 interface Category {
   id: string
@@ -91,6 +92,7 @@ interface EnrichedBook extends BookData {
 }
 
 const FilterPage = () => {
+  const { t, i18n } = useTranslation() // useTranslation hook'ini ishlatish
   const router = useRouter()
 
   // State for data
@@ -121,21 +123,21 @@ const FilterPage = () => {
       try {
         setLoading(true)
         // Fetch all data in parallel
-        const [booksData, bookItemsData, categoriesData, kafedrasData] = await Promise.all([
+        const [booksData, bookItemsData, categoriesData, kafedrasData] = (await Promise.all([
           getAllBooks(),
           getBookItems(),
           getCategories(),
           getKafedras(),
-        ]) as any
+        ])) as any
 
         // Parse books data
         let parsedBooks: BookData[] = []
-        if (booksData.books && Array.isArray(booksData.books)) {
-          parsedBooks = booksData.books
+        if (booksData.data && Array.isArray(booksData.data)) {
+          parsedBooks = booksData.data
         } else if (Array.isArray(booksData)) {
           parsedBooks = booksData
         } else {
-          parsedBooks = booksData.books || booksData
+          parsedBooks = booksData.data || booksData
         }
 
         // Parse bookItems data
@@ -181,14 +183,14 @@ const FilterPage = () => {
         setFilteredBooks(enriched)
       } catch (error) {
         console.error("Ma'lumotlarni olishda xatolik:", error)
-        toast.error("Ma'lumotlarni olishda xatolik yuz berdi")
+        toast.error(t("common.errorFetchingData"))
       } finally {
         setLoading(false)
       }
     }
 
     fetchData()
-  }, [])
+  }, [t])
 
   // Filter books when selections change
   useEffect(() => {
@@ -212,14 +214,14 @@ const FilterPage = () => {
     }
 
     if (result.length === 0 && (selectedCategories.length > 0 || selectedKafedras.length > 0)) {
-      toast.warning("Siz belgilagan tipdagi kitoblar topilmadi", {
+      toast.warning(t("common.noBooksMatchingFilters"), {
         duration: 4000,
         position: "top-center",
       })
     }
 
     setFilteredBooks(result)
-  }, [selectedCategories, selectedKafedras, enrichedBooks])
+  }, [selectedCategories, selectedKafedras, enrichedBooks, t])
 
   const handleCheckboxChange = (type: "category" | "kafedra", value: string, checked: boolean) => {
     if (type === "category") {
@@ -236,7 +238,7 @@ const FilterPage = () => {
   const isTokenyes = (fn: () => void) => {
     const token = localStorage.getItem("token")
     if (!token) {
-      toast.warning("Siz hali Kirishni bajarmadingiz")
+      toast.warning(t("common.loginRequired"))
       router.push("/login")
     } else {
       fn()
@@ -251,14 +253,14 @@ const FilterPage = () => {
     if (!existingBook) {
       cart.push(book)
       localStorage.setItem("cart", JSON.stringify(cart))
-      toast.success(`${book.name} savatga qo'shildi`, {
-        description: "Buyurtmani profil sahifasida rasmiylashing",
+      toast.success(t("common.bookAddedToCart", { bookName: book.name }), {
+        description: t("common.orderConfirmationDesc"),
         position: "top-center",
         duration: 3000,
       })
       window.dispatchEvent(new Event("storage"))
     } else {
-      toast.warning(`${book.name} allaqachon savatda mavjud`)
+      toast.warning(t("common.bookAlreadyInCart", { bookName: book.name }))
     }
   }
 
@@ -267,7 +269,7 @@ const FilterPage = () => {
     if (book.bookItem?.PDFFile?.file_url) {
       window.open(book.bookItem.PDFFile.file_url, "_blank")
     } else {
-      toast.warning("PDF fayl mavjud emas")
+      toast.warning(t("common.pdfNotAvailable"))
     }
   }
 
@@ -305,7 +307,7 @@ const FilterPage = () => {
         <div className="flex items-center justify-center h-64 w-full">
           <div className="text-center">
             <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4 animate-pulse" />
-            <p className="text-muted-foreground">Ma'lumotlar yuklanmoqda...</p>
+            <p className="text-muted-foreground">{t("common.loadingData")}</p>
           </div>
         </div>
       </div>
@@ -317,10 +319,10 @@ const FilterPage = () => {
       {/* Mobile Filter Toggle Button */}
       <div className="md:hidden p-4 border-b bg-white sticky top-0 z-40">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Kitoblar</h2>
+          <h2 className="text-lg font-semibold">{t("common.books")}</h2>
           <Button onClick={() => setShowMobileFilter(true)} variant="outline" className="relative">
             <Filter className="h-4 w-4 mr-2" />
-            Filtr
+            {t("common.filter")}
             {getActiveFiltersCount() > 0 && (
               <Badge className="ml-2 bg-[#21466D] text-white text-xs px-1.5 py-0.5 min-w-[20px] h-5">
                 {getActiveFiltersCount()}
@@ -340,7 +342,7 @@ const FilterPage = () => {
           <div className="absolute inset-x-0 top-0 bottom-0 bg-white shadow-xl h-full w-full max-w-md right-0 z-50 flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b bg-white">
-              <h3 className="text-lg font-semibold">Filtrlar</h3>
+              <h3 className="text-lg font-semibold">{t("common.filter")}</h3>
               <Button variant="ghost" size="icon" onClick={() => setShowMobileFilter(false)} className="h-8 w-8">
                 <X className="h-4 w-4" />
               </Button>
@@ -353,7 +355,7 @@ const FilterPage = () => {
                 <div className="bg-[#21466D]/5 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-[#21466D]">
-                      Faol filtrlar ({getActiveFiltersCount()})
+                      {t("common.activeFilters")} ({getActiveFiltersCount()})
                     </span>
                     <Button
                       variant="ghost"
@@ -361,7 +363,7 @@ const FilterPage = () => {
                       onClick={clearAllFilters}
                       className="text-xs h-6 px-2 text-[#21466D]"
                     >
-                      Barchasini tozalash
+                      {t("common.clearAll")}
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-1">
@@ -369,7 +371,7 @@ const FilterPage = () => {
                       const category = categories.find((c) => c.id === catId)
                       return category ? (
                         <Badge key={catId} variant="secondary" className="text-xs">
-                          {category.name_uz}
+                          {category[`name_${i18n.language}` as keyof typeof category]}
                         </Badge>
                       ) : null
                     })}
@@ -377,7 +379,7 @@ const FilterPage = () => {
                       const kafedra = kafedras.find((k) => k.id === kafId)
                       return kafedra ? (
                         <Badge key={kafId} variant="outline" className="text-xs">
-                          {kafedra.name_uz}
+                          {kafedra[`name_${i18n.language}` as keyof typeof kafedra]}
                         </Badge>
                       ) : null
                     })}
@@ -387,7 +389,7 @@ const FilterPage = () => {
 
               {/* Categories Filter */}
               <div className="space-y-3">
-                <h4 className="font-semibold text-base text-[#21466D]">Kategoriyalar</h4>
+                <h4 className="font-semibold text-base text-[#21466D]">{t("common.categories")}</h4>
                 <div className="space-y-3">
                   {categories.map((category) => (
                     <div key={category.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
@@ -401,7 +403,7 @@ const FilterPage = () => {
                         htmlFor={`mobile-category-${category.id}`}
                         className="text-sm cursor-pointer flex-1 font-medium"
                       >
-                        {category.name_uz}
+                        {category[`name_${i18n.language}` as keyof typeof category]}
                       </label>
                     </div>
                   ))}
@@ -410,7 +412,7 @@ const FilterPage = () => {
 
               {/* Kafedras Filter */}
               <div className="space-y-3">
-                <h4 className="font-semibold text-base text-[#21466D]">Kafedralar</h4>
+                <h4 className="font-semibold text-base text-[#21466D]">{t("common.kafedras")}</h4>
                 <div className="space-y-3">
                   {kafedras.map((kafedra) => (
                     <div key={kafedra.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
@@ -424,7 +426,7 @@ const FilterPage = () => {
                         htmlFor={`mobile-kafedra-${kafedra.id}`}
                         className="text-sm cursor-pointer flex-1 font-medium"
                       >
-                        {kafedra.name_uz}
+                        {kafedra[`name_${i18n.language}` as keyof typeof kafedra]}
                       </label>
                     </div>
                   ))}
@@ -434,12 +436,14 @@ const FilterPage = () => {
 
             {/* Footer */}
             <div className="border-t bg-white p-4 space-y-3">
-              <div className="text-sm text-center text-muted-foreground">{filteredBooks.length} ta kitob topildi</div>
+              <div className="text-sm text-center text-muted-foreground">
+                {filteredBooks.length} {t("common.totalBooksFound", { count: filteredBooks.length })}
+              </div>
               <Button
                 onClick={() => setShowMobileFilter(false)}
                 className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white"
               >
-                Natijalarni ko'rish
+                {t("common.viewResults")}
               </Button>
             </div>
           </div>
@@ -450,7 +454,7 @@ const FilterPage = () => {
       <div className="hidden md:block w-1/4 py-4 space-y-6 sticky top-28 self-start h-fit">
         {/* Categories Filter */}
         <div className="flex flex-col justify-start items-start gap-2">
-          <h3 className="font-semibold mb-2">Kategoriyalar</h3>
+          <h3 className="font-semibold mb-2">{t("common.categories")}</h3>
           {categories.map((category) => (
             <div key={category.id} className="flex items-center gap-2">
               <Checkbox
@@ -459,7 +463,7 @@ const FilterPage = () => {
                 onCheckedChange={(checked) => handleCheckboxChange("category", category.id, checked as boolean)}
               />
               <label htmlFor={`category-${category.id}`} className="text-sm cursor-pointer">
-                {category.name_uz}
+                {category[`name_${i18n.language}` as keyof typeof category]}
               </label>
             </div>
           ))}
@@ -467,7 +471,7 @@ const FilterPage = () => {
 
         {/* Kafedras Filter */}
         <div className="flex flex-col justify-start items-start gap-2">
-          <h3 className="font-semibold mb-2">Kafedralar</h3>
+          <h3 className="font-semibold mb-2">{t("common.kafedras")}</h3>
           {kafedras.map((kafedra) => (
             <div key={kafedra.id} className="flex items-center gap-2">
               <Checkbox
@@ -476,7 +480,7 @@ const FilterPage = () => {
                 onCheckedChange={(checked) => handleCheckboxChange("kafedra", kafedra.id, checked as boolean)}
               />
               <label htmlFor={`kafedra-${kafedra.id}`} className="text-sm cursor-pointer">
-                {kafedra.name_uz}
+                {kafedra[`name_${i18n.language}` as keyof typeof kafedra]}
               </label>
             </div>
           ))}
@@ -485,7 +489,7 @@ const FilterPage = () => {
         {/* Clear Filters */}
         {(selectedCategories.length > 0 || selectedKafedras.length > 0) && (
           <Button variant="outline" onClick={clearAllFilters} className="w-full bg-transparent">
-            Filtrlarni tozalash
+            {t("common.clearAll")}
           </Button>
         )}
       </div>
@@ -494,14 +498,16 @@ const FilterPage = () => {
       <div className="w-full md:w-3/4 py-6 md:pl-6 md:border-l">
         {/* Results count - Desktop only */}
         <div className="mb-4 hidden md:block">
-          <p className="text-sm text-muted-foreground">Jami {filteredBooks.length} ta kitob topildi</p>
+          <p className="text-sm text-muted-foreground">
+            {t("common.totalBooksFound", { count: filteredBooks.length })}
+          </p>
         </div>
 
         {paginatedBooks.length === 0 ? (
           <div className="text-center py-12">
             <BookOpen className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-            <p className="text-lg text-muted-foreground mb-2">Siz belgilagan tipdagi kitoblar topilmadi</p>
-            <p className="text-sm text-muted-foreground">Boshqa filtrlarni sinab ko'ring yoki filtrlarni tozalang</p>
+            <p className="text-lg text-muted-foreground mb-2">{t("common.noBooksMatchingFilters")}</p>
+            <p className="text-sm text-muted-foreground">{t("common.tryOtherFilters")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-6 mb-8 px-4 md:px-0">
@@ -518,14 +524,16 @@ const FilterPage = () => {
                   <CardContent className="p-4 flex-grow">
                     <div className="relative mb-3 overflow-hidden rounded-lg">
                       <Image
-                        src={imageUrl || "/placeholder.svg"}
+                        src={(imageUrl as string) || "/placeholder.svg"}
                         alt={book.name}
                         width={150}
                         height={250}
                         className="w-full h-[250px] md:h-[300px] object-cover"
                       />
                       {isNew && (
-                        <Badge className="absolute top-2 right-2 bg-[#ffc82a] text-[#21466D] text-xs">Yangi</Badge>
+                        <Badge className="absolute top-2 right-2 bg-[#ffc82a] text-[#21466D] text-xs">
+                          {t("common.new")}
+                        </Badge>
                       )}
                     </div>
 
@@ -537,18 +545,30 @@ const FilterPage = () => {
                     </h3>
 
                     <div className="space-y-1 text-sm text-muted-foreground mb-3">
-                      <p>{book.year}-yil</p>
-                      <p className="text-xs text-[#21466D]">Muallif: {book.Auther?.name || "Noma'lum"}</p>
+                      <p>
+                        {book.year}-{t("common.year")}
+                      </p>
+                      <p className="text-xs text-[#21466D]">
+                        {t("common.author")}: {book.Auther?.name || t("common.unknown")}
+                      </p>
 
                       {/* Category and Kafedra badges */}
                       <div className="flex flex-wrap gap-1 mt-2">
                         {book.bookItem?.BookCategoryKafedra && (
                           <>
                             <Badge variant="secondary" className="text-xs bg-[#21466D]/10 text-[#21466D]">
-                              {book.bookItem.BookCategoryKafedra.category.name_uz}
+                              {
+                                book.bookItem.BookCategoryKafedra.category[
+                                  `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.category
+                                ]
+                              }
                             </Badge>
                             <Badge variant="outline" className="text-xs border-[#21466D]/20 text-[#21466D]">
-                              {book.bookItem.BookCategoryKafedra.kafedra.name_uz}
+                              {
+                                book.bookItem.BookCategoryKafedra.kafedra[
+                                  `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.kafedra
+                                ]
+                              }
                             </Badge>
                           </>
                         )}
@@ -562,7 +582,7 @@ const FilterPage = () => {
                       onClick={(e) => isTokenyes(() => addToCart(book, e))}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
-                      Savatga qo'shish
+                      {t("common.addBookToCart")}
                     </Button>
                   </CardFooter>
                 </Card>
