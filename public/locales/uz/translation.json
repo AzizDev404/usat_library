@@ -1,5 +1,6 @@
 {
   "common": {
+    "elementCount":"Buyurtmalar soni: {{count}}",
     "countUnit": "dona",
     "back": "Orqaga",
     "onlineRead": "Onlayn o'qish",
@@ -116,7 +117,7 @@
     "changeLanguage": "Tilni o'zgartirish",
     "status": {
       "1": "Buyurtma berildi",
-      "2": "Tayyorlanmoqda",
+      "2": "Kitobni olib ketishingiz mumkin",
       "3": "Kitob o'qilmoqda",
       "4": "Topshirilgan",
       "5": "Bekor qilingan"

@@ -8,17 +8,84 @@ import { Badge } from "@/components/ui/badge"
 import { Trash2, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { postUserOrder, getUserOrders } from "@/lib/api" // getUserOrders import qilindi
+import { postUserOrder, getUserOrders } from "@/lib/api"
 import { getFullImageUrl } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import { useTranslation } from "react-i18next" // i18n import
+import { useTranslation } from "react-i18next"
+
+// Define the EnrichedBook interface to match the new data structure
+interface EnrichedBook {
+  id: string
+  name: string
+  author_id: string | null
+  year: number
+  page: number
+  books: number
+  book_count: number
+  description: string
+  image_id: string
+  createdAt: string
+  updatedAt: string
+  auther_id: string
+  Auther: {
+    id: string
+    name: string
+  }
+  image: {
+    id: string
+    url: string
+  }
+  bookItem: {
+    id: string
+    book_id: string
+    language_id: string
+    alphabet_id: string
+    status_id: number
+    pdf_id: string
+    createdAt: string
+    updatedAt: string
+    kafedra_id: string | null
+    PDFFile: {
+      id: string
+      file_url: string
+      original_name: string
+      file_size: number
+    }
+    BookCategoryKafedra: {
+      category_id: string
+      kafedra_id: string
+      category: {
+        id: string
+        name_uz: string
+        name_ru: string
+      }
+      kafedra: {
+        id: string
+        name_uz: string
+        name_ru: string
+      }
+    }
+    Language: {
+      id: string
+      name: string
+    }
+    Alphabet: {
+      id: string
+      name: string
+    }
+    Status: {
+      id: string
+      name: string
+    }
+  }
+}
 
 export default function CartPage() {
-  const { t, i18n } = useTranslation() // useTranslation hook'ini ishlatish
-  const [cartItems, setCartItems] = useState<any[]>([])
-  const [selectedItems, setSelectedItems] = useState<number[]>([])
+  const { t, i18n } = useTranslation()
+  const [cartItems, setCartItems] = useState<EnrichedBook[]>([]) // Use EnrichedBook type
+  const [selectedItems, setSelectedItems] = useState<string[]>([]) // Changed to string[] for book IDs
   const [isClient, setIsClient] = useState(false)
-  const [isLoadingOrder, setIsLoadingOrder] = useState(false) // Yangi loading holati
+  const [isLoadingOrder, setIsLoadingOrder] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -36,7 +103,8 @@ export default function CartPage() {
     return text.slice(0, maxLength) + "..."
   }
 
-  const handleCardClick = (bookId: number, e: React.MouseEvent) => {
+  const handleCardClick = (bookId: string, e: React.MouseEvent) => {
+    // Changed to string
     // Prevent navigation if clicking on checkbox or delete button
     const target = e.target as any
     if (target.type === "checkbox" || target.closest("button")) {
@@ -53,11 +121,13 @@ export default function CartPage() {
     }
   }
 
-  const toggleItemSelection = (id: number) => {
+  const toggleItemSelection = (id: string) => {
+    // Changed to string
     setSelectedItems((prev) => (prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]))
   }
 
-  const confirmRemoveFromCart = (bookId: number) => {
+  const confirmRemoveFromCart = (bookId: string) => {
+    // Changed to string
     const updatedCart = cartItems.filter((item) => item.id !== bookId)
     setCartItems(updatedCart)
     setSelectedItems((prev) => prev.filter((id) => id !== bookId))
@@ -72,8 +142,8 @@ export default function CartPage() {
       return
     }
 
-    setIsLoadingOrder(true) // Loadingni yoqish
-    const userId = localStorage.getItem("id") // Foydalanuvchi ID sini olish
+    setIsLoadingOrder(true)
+    const userId = localStorage.getItem("id")
 
     if (!userId) {
       toast.warning(t("common.loginRequired"))
@@ -83,7 +153,7 @@ export default function CartPage() {
     }
 
     try {
-      const userOrdersResponse = await getUserOrders() as any
+      const userOrdersResponse = (await getUserOrders()) as any
       const userOrders = userOrdersResponse.data || []
 
       // Tanlangan kitoblarni avval buyurtma qilinganmi tekshirish
@@ -95,14 +165,14 @@ export default function CartPage() {
           const bookName = cartItems.find((item) => item.id === selectedBookId)?.name || selectedBookId
           toast.warning(t("common.bookAlreadyOrdered", { bookName: bookName }))
           setIsLoadingOrder(false)
-          return // Agar bitta kitob ham avval buyurtma qilingan bo'lsa, jarayonni to'xtatish
+          return
         }
       }
 
       // Har bir tanlangan kitob uchun post yuboramiz
       await Promise.all(
         selectedItems.map(async (bookId) => {
-          await postUserOrder(bookId)
+          await postUserOrder(bookId as any) 
         }),
       )
 
@@ -117,7 +187,7 @@ export default function CartPage() {
       console.error("Buyurtma berishda yoki buyurtmalarni tekshirishda xatolik:", err)
       toast.error(t("common.errorPlacingOrder"))
     } finally {
-      setIsLoadingOrder(false) // Loadingni o'chirish
+      setIsLoadingOrder(false)
     }
   }
 
@@ -177,15 +247,15 @@ export default function CartPage() {
               style={{ animationDelay: `${index * 0.1}s` }}
               onClick={(e) => handleCardClick(book.id, e)}
             >
-              <div className="flex gap-4">
+              <div className="flex gap-4 flex-col sm:flex-row"> {/* Added flex-col for mobile */}
                 <input
                   type="checkbox"
                   checked={selectedItems.includes(book.id)}
                   onChange={() => toggleItemSelection(book.id)}
-                  className="mt-2 accent-[#21466D] w-5 h-5"
+                  className="mt-2 accent-[#21466D] w-5 h-5 self-start sm:self-auto"
                   onClick={(e) => e.stopPropagation()}
                 />
-                <div className="w-28 h-40 flex-shrink-0">
+                <div className="w-full sm:w-28 h-40 flex-shrink-0"> {/* Adjusted width for mobile */}
                   <img
                     src={getFullImageUrl(book.image?.url) || "/placeholder.svg"}
                     alt={book.name}
@@ -204,7 +274,7 @@ export default function CartPage() {
                   </p>
                   <div className="space-y-1 text-sm text-muted-foreground mb-4">
                     <p>
-                      {book.page || book.pages} {t("common.page")}
+                      {book.page} {t("common.page")}
                     </p>
                     <p>
                       {book.year}-{t("common.year")}
@@ -217,14 +287,14 @@ export default function CartPage() {
                         <Badge variant="secondary" className="text-xs bg-[#21466D]/10 text-[#21466D]">
                           {
                             book.bookItem.BookCategoryKafedra.category[
-                              `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.category
+                              `name_${i18n.language.slice(0, 2)}` as keyof typeof book.bookItem.BookCategoryKafedra.category
                             ]
                           }
                         </Badge>
                         <Badge variant="outline" className="text-xs border-[#21466D]/20 text-[#21466D]">
                           {
                             book.bookItem.BookCategoryKafedra.kafedra[
-                              `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.kafedra
+                              `name_${i18n.language.slice(0, 2)}` as keyof typeof book.bookItem.BookCategoryKafedra.kafedra
                             ]
                           }
                         </Badge>
@@ -239,7 +309,7 @@ export default function CartPage() {
                     e.stopPropagation()
                     confirmRemoveFromCart(book.id)
                   }}
-                  className="text-destructive hover:text-destructive"
+                  className="text-destructive hover:text-destructive self-end sm:self-auto"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -249,7 +319,7 @@ export default function CartPage() {
         </div>
 
         <div className="lg:col-span-1">
-          <Card className="sticky top-24 animate-scale-in">
+          <Card className="sticky top-28 animate-scale-in">
             <CardHeader>
               <CardTitle>{t("common.orderSummary")}</CardTitle>
             </CardHeader>
@@ -263,14 +333,14 @@ export default function CartPage() {
               <div className="border-t pt-4">
                 <Button
                   onClick={placeOrder}
-                  disabled={isLoadingOrder || selectedItems.length === 0} // Loading holatida va kitob tanlanmaganda o'chirish
+                  disabled={isLoadingOrder || selectedItems.length === 0}
                   className="px-8 py-6 w-full text-white hover:!bg-white hover:text-[#21466D]"
                   style={{
                     border: "1px solid",
                     backgroundColor: "#21466D",
                   }}
                 >
-                  {isLoadingOrder ? t("common.placingOrder") : t("common.placeOrder")} {/* Loading matni */}
+                  {isLoadingOrder ? t("common.placingOrder") : t("common.placeOrder")}
                 </Button>
               </div>
             </CardContent>

@@ -9,28 +9,113 @@ import { ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { getAllBooks } from "@/lib/api"
+import { getBookItems } from "@/lib/api" // Changed from getAllBooks
 import { getFullImageUrl, isBookNew } from "@/lib/utils"
 import BookSwiper from "@/components/Swiper"
-import { useTranslation } from "react-i18next" // i18n import
+import { useTranslation } from "react-i18next"
+
+// Define the EnrichedBook interface to match the new data structure
+interface EnrichedBook {
+  id: string
+  name: string
+  author_id: string | null
+  year: number
+  page: number
+  books: number
+  book_count: number
+  description: string
+  image_id: string
+  createdAt: string
+  updatedAt: string
+  auther_id: string
+  Auther: {
+    id: string
+    name: string
+  }
+  image: {
+    id: string
+    url: string
+  }
+  bookItem: {
+    id: string
+    book_id: string
+    language_id: string
+    alphabet_id: string
+    status_id: number
+    pdf_id: string
+    createdAt: string
+    updatedAt: string
+    kafedra_id: string | null
+    PDFFile: {
+      id: string
+      file_url: string
+      original_name: string
+      file_size: number
+    }
+    BookCategoryKafedra: {
+      category_id: string
+      kafedra_id: string
+      category: {
+        id: string
+        name_uz: string
+        name_ru: string
+      }
+      kafedra: {
+        id: string
+        name_uz: string
+        name_ru: string
+      }
+    }
+    Language: {
+      id: string
+      name: string
+    }
+    Alphabet: {
+      id: string
+      name: string
+    }
+    Status: {
+      id: string
+      name: string
+    }
+  }
+}
 
 export default function HomePage() {
-  const { t, i18n } = useTranslation() // useTranslation hook'ini ishlatish
+  const { t, i18n } = useTranslation()
   const router = useRouter()
-  const [books, setBooks] = useState<any[]>([])
+  const [books, setBooks] = useState<EnrichedBook[]>([]) // Use EnrichedBook type
   const [visibleBooks, setVisibleBooks] = useState(20)
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await getAllBooks()
-        // Fix: Access the data property from the response
-        const booksData = response.data || []
-        setBooks(booksData)
+        const response = await getBookItems() as any // Call getBookItems
+        const bookItemsData = response.data || []
+
+        // Transform bookItemsData into EnrichedBook structure
+        const enrichedBooks: EnrichedBook[] = bookItemsData.map((item: any) => ({
+          id: item.Book.id,
+          name: item.Book.name,
+          author_id: item.Book.author_id,
+          year: item.Book.year,
+          page: item.Book.page,
+          books: item.Book.books,
+          book_count: item.Book.book_count,
+          description: item.Book.description,
+          image_id: item.Book.image_id,
+          createdAt: item.Book.createdAt,
+          updatedAt: item.Book.updatedAt,
+          auther_id: item.Book.auther_id,
+          Auther: item.Book.Auther,
+          image: item.Book.image,
+          bookItem: item, // Keep the original bookItem nested
+        }))
+        setBooks(enrichedBooks)
       } catch (err) {
         console.error("Kitoblarni olishda xatolik:", err)
-        setBooks([]) // Set empty array on error
+        setBooks([])
       }
     }
     fetchBooks()
@@ -40,7 +125,8 @@ export default function HomePage() {
     setIsClient(true)
   }, [])
 
-  const handleCardClick = (bookId: number) => {
+  const handleCardClick = (bookId: string) => {
+    // Changed to string
     router.push(`/book/${bookId}`)
   }
 
@@ -51,14 +137,15 @@ export default function HomePage() {
   const isTokenyes = (callback: () => void) => {
     const token = localStorage.getItem("token")
     if (!token) {
-      toast.warning(t("common.loginRequired")) // Tarjima qilingan
+      toast.warning(t("common.loginRequired"))
       router.push("/login")
     } else {
       callback()
     }
   }
 
-  const addToCart = (book: any, e: React.MouseEvent) => {
+  const addToCart = (book: EnrichedBook, e: React.MouseEvent) => {
+    // Use EnrichedBook type
     e.stopPropagation()
     const cart = JSON.parse(localStorage.getItem("cart") || "[]")
     const exists = cart.find((item: any) => item.id === book.id)
@@ -67,14 +154,12 @@ export default function HomePage() {
       cart.push(book)
       localStorage.setItem("cart", JSON.stringify(cart))
       toast.success(t("common.bookAddedToCart", { bookName: book.name }), {
-        // Tarjima qilingan
         position: "top-center",
         duration: 3000,
       })
       window.dispatchEvent(new Event("storage"))
     } else {
       toast.error(t("common.bookAlreadyInCart", { bookName: book.name }), {
-        // Tarjima qilingan
         position: "top-center",
         duration: 2500,
       })
@@ -83,8 +168,7 @@ export default function HomePage() {
 
   if (!isClient) return null
 
-  // Fix: Add safety check for books array
-  const newBooks = Array.isArray(books) ? books.filter((book) => isBookNew(book.createdAt)).slice(0, 5) : []
+  const newBooks = Array.isArray(books) ? books.filter((book) => isBookNew(book.bookItem.Status.id)).slice(0, 5) : [] // Use bookItem.Status.id
 
   return (
     <div className="min-h-screen bg-background mt-10">
@@ -94,7 +178,7 @@ export default function HomePage() {
           {Array.isArray(books) &&
             books.slice(0, visibleBooks).map((book) => {
               const imageUrl = book.image?.url ? getFullImageUrl(book.image.url) : "/placeholder.svg"
-              const isNew = isBookNew(book.createdAt)
+              const isNew = isBookNew(book.bookItem.Status.id) // Use bookItem.Status.id
 
               return (
                 <Card
@@ -113,7 +197,7 @@ export default function HomePage() {
                       />
                       {isNew && (
                         <Badge className="absolute top-2 right-2 bg-[#ffc82a] text-[#21466D] text-xs">
-                          {t("common.new")} {/* Tarjima qilingan */}
+                          {t("common.new")}
                         </Badge>
                       )}
                     </div>
@@ -125,13 +209,13 @@ export default function HomePage() {
                     </h3>
                     <div className="space-y-1 text-sm text-muted-foreground mb-4">
                       <p>
-                        {book.page} {t("common.page")} {/* Tarjima qilingan */}
+                        {book.page} {t("common.page")}
                       </p>
                       <p>
-                        {book.year}-{t("common.year")} {/* Tarjima qilingan */}
+                        {book.year}-{t("common.year")}
                       </p>
                       <p className="text-xs text-[#21466D]">
-                        {t("common.author")}: {book.Auther?.name || t("common.unknown")} {/* Tarjima qilingan */}
+                        {t("common.author")}: {book.Auther?.name || t("common.unknown")}
                       </p>
                     </div>
                   </CardContent>
@@ -140,7 +224,7 @@ export default function HomePage() {
                       className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white flex items-center justify-center gap-2"
                       onClick={(e) => isTokenyes(() => addToCart(book, e))}
                     >
-                      <ShoppingCart className="h-4 w-4 mr-2" /> {t("common.addBookToCart")} {/* Tarjima qilingan */}
+                      <ShoppingCart className="h-4 w-4 mr-2" /> {t("common.addBookToCart")}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -150,7 +234,7 @@ export default function HomePage() {
         {Array.isArray(books) && visibleBooks < books.length && (
           <div className="text-center">
             <Button onClick={showMoreBooks} size="lg" className="bg-[#21466D] hover:bg-[#21466D]/90 text-white">
-              {t("common.showMore")} {/* Tarjima qilingan */}
+              {t("common.showMore")}
             </Button>
           </div>
         )}

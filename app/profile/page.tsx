@@ -11,7 +11,6 @@ import {
   LogOut,
   BookOpen,
   ShoppingBag,
-  Archive,
   Menu,
   ChevronDown,
   ChevronUp,
@@ -24,10 +23,10 @@ import {
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useAuthStore } from "@/lib/store/auth"
-import { getUserOrders, getAllBooks, getBookItems } from "@/lib/api"
+import { getUserOrders, getBookItems } from "@/lib/api" // Removed getAllBooks
 import Image from "next/image"
 import { getFullImageUrl } from "@/lib/utils"
-import { useTranslation } from "react-i18next" // i18n import
+import { useTranslation } from "react-i18next"
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -47,33 +46,29 @@ interface Order {
     telegram_id: string | null
   }
   Book: {
+    // This is the nested Book from BookItem
     id: string
     name: string
+    author_id: string | null
+    year: number
+    page: number
+    books: number
+    book_count: number
+    description: string
+    image_id: string
+    createdAt: string
+    updatedAt: string
+    auther_id: string
+    Auther: {
+      id: string
+      name: string
+    }
+    image: {
+      id: string
+      url: string
+    }
   }
   status_message: string
-}
-
-interface BookDetail {
-  id: string
-  name: string
-  author_id: string | null
-  year: number
-  page: number
-  books: number
-  book_count: number
-  description: string
-  image_id: string
-  createdAt: string
-  updatedAt: string
-  auther_id: string
-  Auther: {
-    id: string
-    name: string
-  }
-  image: {
-    id: string
-    url: string
-  }
 }
 
 interface BookItem {
@@ -106,15 +101,38 @@ interface BookItem {
       name_ru: string
     }
   }
+  Book: {
+    // Nested Book data within BookItem
+    id: string
+    name: string
+    author_id: string | null
+    year: number
+    page: number
+    books: number
+    book_count: number
+    description: string
+    image_id: string
+    createdAt: string
+    updatedAt: string
+    auther_id: string
+    Auther: {
+      id: string
+      name: string
+    }
+    image: {
+      id: string
+      url: string
+    }
+  }
 }
 
 interface EnrichedOrder extends Order {
-  bookDetail?: BookDetail
+  bookDetail?: Order["Book"] // Now directly from Order.Book
   bookItem?: BookItem
 }
 
 export default function ProfilePage() {
-  const { t, i18n } = useTranslation() // useTranslation hook'ini ishlatish
+  const { t, i18n } = useTranslation()
   const [activeTab, setActiveTab] = useState("buyurtmalar")
   const [mobileView, setMobileView] = useState<"menu" | "content">("menu")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -129,7 +147,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [notification, setNotification] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
-  const [currentLanguage, setCurrentLanguage] = useState(i18n.language) // Joriy tilni saqlash
+  const [currentLanguage, setCurrentLanguage] = useState(i18n.language)
 
   const router = useRouter()
   const [isClient, setIsClient] = useState(false)
@@ -158,7 +176,7 @@ export default function ProfilePage() {
   useEffect(() => {
     setIsClient(true)
     fetchData()
-    setCurrentLanguage(i18n.language) // Til o'zgarganda state'ni yangilash
+    setCurrentLanguage(i18n.language)
   }, [i18n.language])
 
   const fetchData = async () => {
@@ -171,37 +189,33 @@ export default function ProfilePage() {
         return
       }
 
-      // Fetch all data in parallel
-      const [ordersData, booksData, bookItemsData] = (await Promise.all([
-        getUserOrders(),
-        getAllBooks(),
-        getBookItems(),
-      ])) as any
+      // Fetch orders and book items in parallel
+      const [ordersData, bookItemsData] = (await Promise.all([getUserOrders(), getBookItems()])) as any
+
       // Filter orders for current user
       const userOrders = ordersData.data.filter((order: Order) => order.user_id === userId)
-      console.log(userOrders)
-      // Create enriched orders with book details
+
+      // Create enriched orders with book details from bookItems
       const enrichedOrders: EnrichedOrder[] = userOrders.map((order: Order) => {
-        const bookDetail = booksData.data.find((book: BookDetail) => book.id === order.book_id)
         const bookItem = bookItemsData.data.find((item: BookItem) => item.book_id === order.book_id)
 
         return {
           ...order,
-          bookDetail,
-          bookItem,
+          bookDetail: bookItem?.Book, // Get book details from nested Book in BookItem
+          bookItem: bookItem, // Keep the full bookItem
         }
       })
 
       setOrders(enrichedOrders)
 
-      // // Set profile data from first order's user info
+      // Set profile data from first order's user info
       if (userOrders.length > 0) {
         const userData = userOrders[0].User
         setProfile({
           fullName: userData.full_name,
           phone: userData.phone,
-          direction: "Kompyuter injiniringi", // Default value
-          group: "KI-21", // Default value
+          direction: "", // Default value
+          group: "", // Default value
         })
       }
     } catch (error) {
@@ -288,7 +302,7 @@ export default function ProfilePage() {
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang)
     setCurrentLanguage(lang)
-    localStorage.setItem("i18nextLng", lang) // Tilni localStorage'da saqlash
+    localStorage.setItem("i18nextLng", lang)
   }
 
   const renderOrderCard = (order: EnrichedOrder) => {
@@ -379,28 +393,29 @@ export default function ProfilePage() {
 
             <div className="flex items-center justify-between">
               <div className="text-sm">
-                {order.bookItem && (
-                  <div className="flex flex-wrap gap-1">
-                    {order.bookItem.BookCategoryKafedra && (
-                      <>
-                        <Badge variant="secondary" className="text-xs bg-[#21466D]/10 text-[#21466D]">
-                          {
-                            order.bookItem.BookCategoryKafedra.category[
-                              `name_${i18n.language}` as keyof typeof order.bookItem.BookCategoryKafedra.category
-                            ]
-                          }
-                        </Badge>
-                        <Badge variant="outline" className="text-xs border-[#21466D]/20 text-[#21466D]">
-                          {
-                            order.bookItem.BookCategoryKafedra.kafedra[
-                              `name_${i18n.language}` as keyof typeof order.bookItem.BookCategoryKafedra.kafedra
-                            ]
-                          }
-                        </Badge>
-                      </>
-                    )}
-                  </div>
-                )}
+               {order.bookItem && (
+  <div className="flex flex-wrap gap-1">
+    {order.bookItem.BookCategoryKafedra && (
+      <>
+        <Badge variant="secondary" className="text-xs bg-[#21466D]/10 text-[#21466D]">
+          {
+            order.bookItem.BookCategoryKafedra.category[
+              `name_${i18n.language.slice(0, 2)}` as keyof typeof order.bookItem.BookCategoryKafedra.category
+            ]
+          }
+        </Badge>
+        <Badge variant="outline" className="text-xs border-[#21466D]/20 text-[#21466D]">
+          {
+            order.bookItem.BookCategoryKafedra.kafedra[
+              `name_${i18n.language.slice(0, 2)}` as keyof typeof order.bookItem.BookCategoryKafedra.kafedra
+            ]
+          }
+        </Badge>
+      </>
+    )}
+  </div>
+)}
+
               </div>
 
               <Button
@@ -437,7 +452,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  {order.bookItem?.PDFFile && (
+                  {order.bookItem?.PDFFile?.file_url && ( // Check for file_url existence
                     <Button
                       onClick={() => window.open(order.bookItem!.PDFFile.file_url, "_blank")}
                       className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white"
@@ -457,7 +472,6 @@ export default function ProfilePage() {
 
   const menuItems = [
     { id: "buyurtmalar", label: t("common.activeOrders"), icon: ShoppingBag, count: activeOrders.length },
-    { id: "arxiv", label: t("common.archivedOrders"), icon: Archive, count: archivedOrders.length },
     { id: "malumotlar", label: t("common.personalInfo"), icon: User },
   ]
 
@@ -492,7 +506,7 @@ export default function ProfilePage() {
                     <h3 className="font-medium text-[#21466D]">{item.label}</h3>
                     {item.count !== undefined && (
                       <p className="text-sm text-muted-foreground">
-                        {item.count} {t("common.elementCount", { count: item.count })}
+                        {t("common.elementCount", { count: item.count })}
                       </p>
                     )}
                   </div>
@@ -565,35 +579,6 @@ export default function ProfilePage() {
           </div>
         )
 
-      case "arxiv":
-        return (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              {isMobile && (
-                <Button variant="ghost" size="sm" onClick={() => setMobileView("menu")} className="text-[#21466D]">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  {t("common.back")}
-                </Button>
-              )}
-              <h2 className="text-2xl font-semibold text-[#21466D] dark:text-white">
-                {t("common.archivedOrders")} ({archivedOrders.length})
-              </h2>
-            </div>
-            <div className="space-y-4">
-              {archivedOrders.length > 0 ? (
-                archivedOrders.map((order) => renderOrderCard(order))
-              ) : (
-                <Card className="border-[#21466D]/10">
-                  <CardContent className="p-8 text-center">
-                    <Archive className="mx-auto h-12 w-12 text-[#21466D]/40 mb-4" />
-                    <p className="text-muted-foreground">{t("common.noArchivedOrders")}</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </div>
-        )
-
       case "malumotlar":
         return (
           <Card className="w-full border-[#21466D]/10">
@@ -641,30 +626,7 @@ export default function ProfilePage() {
                     className="border-[#21466D]/20 focus:border-[#21466D] focus:ring-[#21466D]/20"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="direction" className="text-[#21466D] dark:text-white font-medium">
-                    {t("common.direction")}
-                  </Label>
-                  <Input
-                    id="direction"
-                    disabled
-                    value={profile.direction}
-                    onChange={(e) => setProfile({ ...profile, direction: e.target.value })}
-                    className="border-[#21466D]/20 focus:border-[#21466D] focus:ring-[#21466D]/20"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="group" className="text-[#21466D] dark:text-white font-medium">
-                    {t("common.group")}
-                  </Label>
-                  <Input
-                    id="group"
-                    disabled
-                    value={profile.group}
-                    onChange={(e) => setProfile({ ...profile, group: e.target.value })}
-                    className="border-[#21466D]/20 focus:border-[#21466D] focus:ring-[#21466D]/20"
-                  />
-                </div>
+                
                 {/* Tilni o'zgartirish bo'limi */}
                 <div className="space-y-2">
                   <Label htmlFor="language-select" className="text-[#21466D] dark:text-white font-medium">
@@ -717,8 +679,8 @@ export default function ProfilePage() {
     <div className="container mx-auto px-4 py-8 max-md:mb-10">
       {/* Desktop Header */}
       {!isMobile && (
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-[#21466D] dark:text-white">
+        <div className="flex items-center justify-between mb-6 ">
+          <h1 className="text-3xl font-bold text-[#21466D] dark:text-white md:hidden">
             {profile.fullName || t("common.profile")}
           </h1>
           <Button
@@ -748,46 +710,51 @@ export default function ProfilePage() {
         </div>
       ) : (
         /* Desktop View */
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 ">
           {/* Sidebar */}
-          <div className={`md:col-span-1 ${isMobileMenuOpen ? "block" : "hidden md:block"}`}>
-            <Card className="border-[#21466D]/10">
-              <CardContent className="p-4">
-                <nav className="space-y-2">
-                  {menuItems.map((item) => {
-                    const Icon = item.icon
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => {
-                          setActiveTab(item.id)
-                          setIsMobileMenuOpen(false)
-                        }}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-all duration-200 font-medium ${
-                          activeTab === item.id
-                            ? "bg-[#21466D] text-white shadow-md"
-                            : "hover:bg-[#21466D]/10 text-[#21466D] dark:text-white"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon className="h-5 w-5" />
-                          {item.label}
-                        </div>
-                        {item.count !== undefined && (
-                          <Badge
-                            className={`text-xs ${
-                              activeTab === item.id ? "bg-white/20 text-white" : "bg-[#21466D]/10 text-[#21466D]"
-                            }`}
-                          >
-                            {item.count}
-                          </Badge>
-                        )}
-                      </button>
-                    )
-                  })}
-                </nav>
-              </CardContent>
-            </Card>
+          <div className={`md:col-span-1  ${isMobileMenuOpen ? "block" : "hidden md:block"}`}>
+            <div className="sticky top-[150px]">
+              <h1 className="text-[29.9px] font-bold text-[#21466D] dark:text-white">
+                {profile.fullName || t("common.profile")}
+              </h1>
+              <Card className="border-[#21466D]/10 ">
+                <CardContent className="p-4">
+                  <nav className="space-y-2 ">
+                    {menuItems.map((item) => {
+                      const Icon = item.icon
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => {
+                            setActiveTab(item.id)
+                            setIsMobileMenuOpen(false)
+                          }}
+                          className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-all duration-200 font-medium ${
+                            activeTab === item.id
+                              ? "bg-[#21466D] text-white shadow-md"
+                              : "hover:bg-[#21466D]/10 text-[#21466D] dark:text-white"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Icon className="h-5 w-5" />
+                            {item.label}
+                          </div>
+                          {item.count !== undefined && (
+                            <Badge
+                              className={`text-xs ${
+                                activeTab === item.id ? "bg-white/20 text-white" : "bg-[#21466D]/10 text-[#21466D]"
+                              }`}
+                            >
+                              {item.count}
+                            </Badge>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </nav>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* Main Content */}

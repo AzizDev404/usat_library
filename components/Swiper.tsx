@@ -90,7 +90,6 @@ export default function BookSwiper({ initialBooks, initialBookItems }: BookSwipe
   const [books, setBooks] = useState<BookData[]>(initialBooks || [])
   const [bookItems, setBookItems] = useState<BookItem[]>(initialBookItems || [])
   const [loading, setLoading] = useState(!initialBooks || !initialBookItems)
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -237,14 +236,14 @@ export default function BookSwiper({ initialBooks, initialBookItems }: BookSwipe
                           <Badge className="bg-[#21466D]/10 text-[#21466D] text-xs px-2 py-1">
                             {
                               book.bookItem.BookCategoryKafedra.category[
-                                `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.category
+                                `name_${i18n.language.slice(0, 2)}` as keyof typeof book.bookItem.BookCategoryKafedra.category
                               ]
                             }
                           </Badge>
                           <Badge className="bg-[#ffc82a]/20 text-[#21466D] text-xs px-2 py-1">
                             {
                               book.bookItem.BookCategoryKafedra.kafedra[
-                                `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.kafedra
+                                `name_${i18n.language.slice(0, 2)}` as keyof typeof book.bookItem.BookCategoryKafedra.kafedra
                               ]
                             }
                           </Badge>
@@ -366,14 +365,14 @@ export default function BookSwiper({ initialBooks, initialBookItems }: BookSwipe
                                     <Badge className="bg-[#21466D]/15 text-[#21466D] text-sm px-4 py-2 rounded-full">
                                       {
                                         book.bookItem.BookCategoryKafedra.category[
-                                          `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.category
+                                          `name_${i18n.language.slice(0, 2)}` as keyof typeof book.bookItem.BookCategoryKafedra.category
                                         ]
                                       }
                                     </Badge>
                                     <Badge className="border-2 border-[#21466D]/20 text-[#21466D] text-sm px-4 py-2 rounded-full bg-transparent">
                                       {
                                         book.bookItem.BookCategoryKafedra.kafedra[
-                                          `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.kafedra
+                                          `name_${i18n.language.slice(0, 2)}` as keyof typeof book.bookItem.BookCategoryKafedra.kafedra
                                         ]
                                       }
                                     </Badge>

@@ -11,9 +11,9 @@ import Image from "next/image"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink } from "@/components/ui/pagination"
-import { getAllBooks, getBookItems, getCategories, getKafedras } from "@/lib/api"
+import { getBookItems, getCategories, getKafedras } from "@/lib/api" // Removed getAllBooks
 import { getFullImageUrl, isBookNew } from "@/lib/utils"
-import { useTranslation } from "react-i18next" // i18n import
+import { useTranslation } from "react-i18next"
 
 interface Category {
   id: string
@@ -32,7 +32,8 @@ interface Kafedra {
   updatedAt: string
 }
 
-interface BookData {
+// Define the EnrichedBook interface to match the new data structure
+interface EnrichedBook {
   id: string
   name: string
   author_id: string | null
@@ -53,55 +54,60 @@ interface BookData {
     id: string
     url: string
   }
-}
-
-interface BookItem {
-  id: string
-  book_id: string
-  language_id: string
-  alphabet_id: string
-  status_id: number
-  pdf_id: string
-  createdAt: string
-  updatedAt: string
-  kafedra_id: string | null
-  PDFFile: {
+  bookItem: {
     id: string
-    file_url: string
-    original_name: string
-    file_size: number
-  }
-  BookCategoryKafedra: {
-    category_id: string
-    kafedra_id: string
-    category: {
+    book_id: string
+    language_id: string
+    alphabet_id: string
+    status_id: number
+    pdf_id: string
+    createdAt: string
+    updatedAt: string
+    kafedra_id: string | null
+    PDFFile: {
       id: string
-      name_uz: string
-      name_ru: string
+      file_url: string
+      original_name: string
+      file_size: number
     }
-    kafedra: {
+    BookCategoryKafedra: {
+      category_id: string
+      kafedra_id: string
+      category: {
+        id: string
+        name_uz: string
+        name_ru: string
+      }
+      kafedra: {
+        id: string
+        name_uz: string
+        name_ru: string
+      }
+    }
+    Language: {
       id: string
-      name_uz: string
-      name_ru: string
+      name: string
+    }
+    Alphabet: {
+      id: string
+      name: string
+    }
+    Status: {
+      id: string
+      name: string
     }
   }
-}
-
-interface EnrichedBook extends BookData {
-  bookItem?: BookItem
 }
 
 const FilterPage = () => {
-  const { t, i18n } = useTranslation() // useTranslation hook'ini ishlatish
+  const { t, i18n } = useTranslation()
   const router = useRouter()
 
   // State for data
-  const [books, setBooks] = useState<BookData[]>([])
-  const [bookItems, setBookItems] = useState<BookItem[]>([])
+  const [bookItems, setBookItems] = useState<EnrichedBook[]>([]) // Changed to EnrichedBook[]
   const [categories, setCategories] = useState<Category[]>([])
   const [kafedras, setKafedras] = useState<Kafedra[]>([])
-  const [enrichedBooks, setEnrichedBooks] = useState<EnrichedBook[]>([])
-  const [filteredBooks, setFilteredBooks] = useState<EnrichedBook[]>([])
+  const [filteredBooks, setFilteredBooks] = useState<EnrichedBook[]>([]) // Use EnrichedBook[]
 
   // State for filters
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
@@ -123,29 +129,32 @@ const FilterPage = () => {
       try {
         setLoading(true)
         // Fetch all data in parallel
-        const [booksData, bookItemsData, categoriesData, kafedrasData] = (await Promise.all([
-          getAllBooks(),
-          getBookItems(),
+        const [bookItemsResponse, categoriesData, kafedrasData] = (await Promise.all([
+          getBookItems(), // Only call getBookItems
           getCategories(),
           getKafedras(),
         ])) as any
 
-        // Parse books data
-        let parsedBooks: BookData[] = []
-        if (booksData.data && Array.isArray(booksData.data)) {
-          parsedBooks = booksData.data
-        } else if (Array.isArray(booksData)) {
-          parsedBooks = booksData
-        } else {
-          parsedBooks = booksData.data || booksData
-        }
-
-        // Parse bookItems data
-        let parsedBookItems: BookItem[] = []
-        if (Array.isArray(bookItemsData)) {
-          parsedBookItems = bookItemsData
-        } else if (bookItemsData.data && Array.isArray(bookItemsData.data)) {
-          parsedBookItems = bookItemsData.data
+        // Parse bookItems data and transform to EnrichedBook
+        let parsedBookItems: EnrichedBook[] = []
+        if (bookItemsResponse.data && Array.isArray(bookItemsResponse.data)) {
+          parsedBookItems = bookItemsResponse.data.map((item: any) => ({
+            id: item.Book.id,
+            name: item.Book.name,
+            author_id: item.Book.author_id,
+            year: item.Book.year,
+            page: item.Book.page,
+            books: item.Book.books,
+            book_count: item.Book.book_count,
+            description: item.Book.description,
+            image_id: item.Book.image_id,
+            createdAt: item.Book.createdAt,
+            updatedAt: item.Book.updatedAt,
+            auther_id: item.Book.auther_id,
+            Auther: item.Book.Auther,
+            image: item.Book.image,
+            bookItem: item, // Keep the original bookItem nested
+          }))
         }
 
         // Parse categories data
@@ -165,22 +174,10 @@ const FilterPage = () => {
         }
 
         // Set state
-        setBooks(parsedBooks)
-        setBookItems(parsedBookItems)
+        setBookItems(parsedBookItems) // Set the enriched book items
         setCategories(parsedCategories)
         setKafedras(parsedKafedras)
-
-        // Create enriched books
-        const enriched: EnrichedBook[] = parsedBooks.map((book) => {
-          const bookItem = parsedBookItems.find((item) => item.book_id === book.id)
-          return {
-            ...book,
-            bookItem,
-          }
-        })
-
-        setEnrichedBooks(enriched)
-        setFilteredBooks(enriched)
+        setFilteredBooks(parsedBookItems) // Initialize filtered books with all enriched books
       } catch (error) {
         console.error("Ma'lumotlarni olishda xatolik:", error)
         toast.error(t("common.errorFetchingData"))
@@ -194,7 +191,7 @@ const FilterPage = () => {
 
   // Filter books when selections change
   useEffect(() => {
-    let result = [...enrichedBooks]
+    let result = [...bookItems] // Filter from the enriched bookItems
     setCurrentPage(1)
 
     if (selectedCategories.length > 0) {
@@ -221,7 +218,7 @@ const FilterPage = () => {
     }
 
     setFilteredBooks(result)
-  }, [selectedCategories, selectedKafedras, enrichedBooks, t])
+  }, [selectedCategories, selectedKafedras, bookItems, t]) // Depend on bookItems
 
   const handleCheckboxChange = (type: "category" | "kafedra", value: string, checked: boolean) => {
     if (type === "category") {
@@ -371,7 +368,7 @@ const FilterPage = () => {
                       const category = categories.find((c) => c.id === catId)
                       return category ? (
                         <Badge key={catId} variant="secondary" className="text-xs">
-                          {category[`name_${i18n.language}` as keyof typeof category]}
+                          {category[`name_${i18n.language.slice(0, 2)}` as keyof typeof category]}
                         </Badge>
                       ) : null
                     })}
@@ -379,7 +376,7 @@ const FilterPage = () => {
                       const kafedra = kafedras.find((k) => k.id === kafId)
                       return kafedra ? (
                         <Badge key={kafId} variant="outline" className="text-xs">
-                          {kafedra[`name_${i18n.language}` as keyof typeof kafedra]}
+                          {kafedra[`name_${i18n.language.slice(0,2)}` as keyof typeof kafedra]}
                         </Badge>
                       ) : null
                     })}
@@ -403,7 +400,7 @@ const FilterPage = () => {
                         htmlFor={`mobile-category-${category.id}`}
                         className="text-sm cursor-pointer flex-1 font-medium"
                       >
-                        {category[`name_${i18n.language}` as keyof typeof category]}
+                        {category[`name_${i18n.language.slice(0, 2)}` as keyof typeof category]}
                       </label>
                     </div>
                   ))}
@@ -426,7 +423,7 @@ const FilterPage = () => {
                         htmlFor={`mobile-kafedra-${kafedra.id}`}
                         className="text-sm cursor-pointer flex-1 font-medium"
                       >
-                        {kafedra[`name_${i18n.language}` as keyof typeof kafedra]}
+                        {kafedra[`name_${i18n.language.slice(0, 2)}` as keyof typeof kafedra]}
                       </label>
                     </div>
                   ))}
@@ -513,7 +510,7 @@ const FilterPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-6 mb-8 px-4 md:px-0">
             {paginatedBooks.map((book) => {
               const imageUrl = book.image?.url ? getFullImageUrl(book.image.url) : "/placeholder.svg"
-              const isNew = isBookNew(book.createdAt)
+              const isNew = isBookNew(book.bookItem.Status.id) // Use bookItem.Status.id
 
               return (
                 <Card
@@ -559,14 +556,14 @@ const FilterPage = () => {
                             <Badge variant="secondary" className="text-xs bg-[#21466D]/10 text-[#21466D]">
                               {
                                 book.bookItem.BookCategoryKafedra.category[
-                                  `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.category
+                                  `name_${i18n.language.slice(0, 2)}` as keyof typeof book.bookItem.BookCategoryKafedra.category
                                 ]
                               }
                             </Badge>
                             <Badge variant="outline" className="text-xs border-[#21466D]/20 text-[#21466D]">
                               {
                                 book.bookItem.BookCategoryKafedra.kafedra[
-                                  `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.kafedra
+                                  `name_${i18n.language.slice(0,2)}` as keyof typeof book.bookItem.BookCategoryKafedra.kafedra
                                 ]
                               }
                             </Badge>

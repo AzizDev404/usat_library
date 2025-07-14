@@ -19,15 +19,18 @@ import {
   ChevronRight,
   FileText,
   Download,
+  Languages,
+  Type,
 } from "lucide-react"
 import { toast } from "sonner"
 import Image from "next/image"
-import { getAllBooks, getBookItems } from "@/lib/api"
+import { getBookItems } from "@/lib/api" // Removed getAllBooks
 import { getFullImageUrl } from "@/lib/utils"
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery"
-import { useTranslation } from "react-i18next" // i18n import
+import { useTranslation } from "react-i18next"
 
-interface BookData {
+// Define the EnrichedBook interface to match the new data structure
+interface EnrichedBook {
   id: string
   name: string
   author_id: string | null
@@ -48,51 +51,58 @@ interface BookData {
     id: string
     url: string
   }
-}
-
-interface BookItem {
-  id: string
-  book_id: string
-  language_id: string
-  alphabet_id: string
-  status_id: number
-  pdf_id: string
-  createdAt: string
-  updatedAt: string
-  kafedra_id: string | null
-  PDFFile: {
+  bookItem: {
     id: string
-    file_url: string
-    original_name: string
-    file_size: number
-  }
-  BookCategoryKafedra: {
-    category_id: string
-    kafedra_id: string
-    category: {
+    book_id: string
+    language_id: string
+    alphabet_id: string
+    status_id: number
+    pdf_id: string
+    createdAt: string
+    updatedAt: string
+    kafedra_id: string | null
+    PDFFile: {
       id: string
-      name_uz: string
-      name_ru: string
+      file_url: string
+      original_name: string
+      file_size: number
     }
-    kafedra: {
+    BookCategoryKafedra: {
+      category_id: string
+      kafedra_id: string
+      category: {
+        id: string
+        name_uz: string
+        name_ru: string
+      }
+      kafedra: {
+        id: string
+        name_uz: string
+        name_ru: string
+      }
+    }
+    Language: {
       id: string
-      name_uz: string
-      name_ru: string
+      name: string
+    }
+    Alphabet: {
+      id: string
+      name: string
+    }
+    Status: {
+      id: string
+      name: string
     }
   }
-}
-
-interface EnrichedBook extends BookData {
-  bookItem?: BookItem
 }
 
 export default function BookDetailPage() {
-  const { t, i18n } = useTranslation() // useTranslation hook'ini ishlatish
+  const { t, i18n } = useTranslation()
   const params = useParams()
   const router = useRouter()
   const bookId = params.id as string
   const [book, setBook] = useState<EnrichedBook | null>(null)
-  const [allBooks, setAllBooks] = useState<EnrichedBook[]>([])
+  const [allEnrichedBooks, setAllEnrichedBooks] = useState<EnrichedBook[]>([]) // Store all enriched books for related books
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
@@ -106,88 +116,35 @@ export default function BookDetailPage() {
     const fetchBookData = async () => {
       try {
         setLoading(true)
-        // BookItems dan ma'lumot olish
-        const bookItemsData = await getBookItems()
-        // Books ma'lumotlarini olish
-        const booksData = await getAllBooks()
+        const bookItemsResponse = await getBookItems() as any
+        const bookItemsData = bookItemsResponse.data || []
 
-        let books: BookData[] = []
-        let bookItems: BookItem[] = []
+        // Transform all bookItemsData into EnrichedBook structure
+        const enrichedBooksList: EnrichedBook[] = bookItemsData.map((item: any) => ({
+          id: item.Book.id,
+          name: item.Book.name,
+          author_id: item.Book.author_id,
+          year: item.Book.year,
+          page: item.Book.page,
+          books: item.Book.books,
+          book_count: item.Book.book_count,
+          description: item.Book.description,
+          image_id: item.Book.image_id,
+          createdAt: item.Book.createdAt,
+          updatedAt: item.Book.updatedAt,
+          auther_id: item.Book.auther_id,
+          Auther: item.Book.Auther,
+          image: item.Book.image,
+          bookItem: item, // Keep the original bookItem nested
+        }))
 
-        // BookItems ma'lumotlarini parse qilish
-        if (Array.isArray(bookItemsData)) {
-          bookItems = bookItemsData
-        } else if (
-          typeof bookItemsData === "object" &&
-          bookItemsData !== null &&
-          "data" in bookItemsData &&
-          Array.isArray((bookItemsData as any).data)
-        ) {
-          bookItems = (bookItemsData as any).data
-        }
+        setAllEnrichedBooks(enrichedBooksList) // Store all for related books
 
-        // Books ma'lumotlarini parse qilish - Fixed this part
-        if (booksData && typeof booksData === "object") {
-          if (booksData.books && Array.isArray(booksData.books)) {
-            books = booksData.books
-          } else if (booksData.data && Array.isArray(booksData.data)) {
-            books = booksData.data
-          } else if (Array.isArray(booksData)) {
-            books = booksData
-          }
-        }
+        // Find the current book
+        const currentBook = enrichedBooksList.find((b) => b.id === bookId)
 
-        // Joriy kitobning bookItem ma'lumotini topish
-        const currentBookItem = bookItems.find((item) => item.book_id === bookId)
-
-        if (currentBookItem) {
-          // BookItem mavjud bo'lsa, books dan asosiy ma'lumotni topish
-          const mainBookData = books.find((b) => b.id === currentBookItem.book_id)
-
-          if (mainBookData) {
-            const enrichedBook: EnrichedBook = {
-              ...mainBookData,
-              bookItem: currentBookItem,
-            }
-            setBook(enrichedBook)
-          } else {
-            // Agar books da topilmasa, bookItem ma'lumotlaridan foydalanish
-            const bookFromItem: EnrichedBook = {
-              id: currentBookItem.book_id,
-              name: `${t("common.book")} #${currentBookItem.book_id}`,
-              author_id: null,
-              year: new Date(currentBookItem.createdAt).getFullYear(),
-              page: 0,
-              books: 0,
-              book_count: 0,
-              description: t("common.descriptionNotAvailable"),
-              image_id: "",
-              createdAt: currentBookItem.createdAt,
-              updatedAt: currentBookItem.updatedAt,
-              auther_id: "",
-              Auther: {
-                id: "",
-                name: t("common.unknown"),
-              },
-              image: {
-                id: "",
-                url: "",
-              },
-              bookItem: currentBookItem,
-            }
-            setBook(bookFromItem)
-          }
-
-          // Barcha kitoblarni enriched qilish
-          const enrichedBooks: EnrichedBook[] = books.map((bookData) => {
-            const bookItem = bookItems.find((item) => item.book_id === bookData.id)
-            return {
-              ...bookData,
-              bookItem,
-            }
-          })
-
-          setAllBooks(enrichedBooks)
+        if (currentBook) {
+          setBook(currentBook)
         } else {
           toast.error(t("common.bookNotFound"))
           router.push("/")
@@ -246,7 +203,7 @@ export default function BookDetailPage() {
   // Get related books (exclude current book)
   const getRelatedBooks = () => {
     // Hozirgi kitobni exclude qilish
-    const otherBooks = allBooks.filter((b) => b.id !== bookId)
+    const otherBooks = allEnrichedBooks.filter((b) => b.id !== bookId)
     if (otherBooks.length === 0) return []
 
     // Hozirgi kitobning kategoriya va kafedra ma'lumotlari
@@ -416,7 +373,7 @@ export default function BookDetailPage() {
 
               {/* Action Buttons */}
               <div className="space-y-3">
-                {book.bookItem?.PDFFile ? (
+                {book.bookItem?.PDFFile?.file_url ? ( // Check for file_url existence
                   <>
                     <Button
                       variant="outline"
@@ -557,6 +514,27 @@ export default function BookDetailPage() {
                     </>
                   )}
 
+                  {/* Language and Alphabet */}
+                  {book.bookItem?.Language && (
+                    <div className="flex items-center gap-3">
+                      <Languages className="h-5 w-5 text-[#21466D]" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">{t("common.language")}</p>
+                        <p className="font-medium text-[#21466D]">{book.bookItem.Language.name}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {book.bookItem?.Alphabet && (
+                    <div className="flex items-center gap-3">
+                      <Type className="h-5 w-5 text-[#21466D]" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">{t("common.alphabet")}</p>
+                        <p className="font-medium text-[#21466D]">{book.bookItem.Alphabet.name}</p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-3">
                     <Hash className="h-5 w-5 text-[#21466D]" />
                     <div>
@@ -653,7 +631,7 @@ export default function BookDetailPage() {
                               className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-[#21466D]/10 hover:border-[#21466D]/20 h-[420px] flex flex-col"
                               onClick={() => handleBookClick(relatedBook.id)}
                             >
-                              <CardContent className="p-4 flex flex-col h-full">
+                              <CardContent className="p-4 flex-col h-full">
                                 <div className="aspect-[3/4] overflow-hidden rounded-lg mb-3 flex-shrink-0 max-h-[280px]">
                                   <Image
                                     src={
