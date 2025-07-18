@@ -9,6 +9,7 @@ const withPWA = nextPWA({
 })
 
 const nextConfig = {
+  output: 'export', 
   reactStrictMode: true,
   eslint: {
     ignoreDuringBuilds: true,
@@ -19,6 +20,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+   trailingSlash: true, 
 }
 
 export default withPWA(nextConfig)

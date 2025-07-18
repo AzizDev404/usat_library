@@ -1,5 +1,5 @@
 "use client"
-
+import { generateStaticParams } from "./layout"
 import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,7 +28,7 @@ import { getBookItems } from "@/lib/api" // Removed getAllBooks
 import { getFullImageUrl } from "@/lib/utils"
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery"
 import { useTranslation } from "react-i18next"
-
+generateStaticParams()
 // Define the EnrichedBook interface to match the new data structure
 interface EnrichedBook {
   id: string

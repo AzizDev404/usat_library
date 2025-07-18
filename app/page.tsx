@@ -1,7 +1,6 @@
 "use client"
-
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react" // Import useMemo
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,9 +8,9 @@ import { ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { getBookItems } from "@/lib/api" // Changed from getAllBooks
+import { getBookItems } from "@/lib/api"
 import { getFullImageUrl, isBookNew } from "@/lib/utils"
-import BookSwiper from "@/components/Swiper"
+import BookSwiper from "@/components/Swiper" // Ensure correct path
 import { useTranslation } from "react-i18next"
 
 // Define the EnrichedBook interface to match the new data structure
@@ -84,17 +83,16 @@ interface EnrichedBook {
 export default function HomePage() {
   const { t, i18n } = useTranslation()
   const router = useRouter()
-  const [books, setBooks] = useState<EnrichedBook[]>([]) // Use EnrichedBook type
+  const [books, setBooks] = useState<EnrichedBook[]>([])
   const [visibleBooks, setVisibleBooks] = useState(20)
   const [isClient, setIsClient] = useState(false)
+  const [showScrollButton, setShowScrollButton] = useState(false)
 
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await getBookItems() as any // Call getBookItems
+        const response = (await getBookItems()) as any
         const bookItemsData = response.data || []
-
-        // Transform bookItemsData into EnrichedBook structure
         const enrichedBooks: EnrichedBook[] = bookItemsData.map((item: any) => ({
           id: item.Book.id,
           name: item.Book.name,
@@ -125,8 +123,30 @@ export default function HomePage() {
     setIsClient(true)
   }, [])
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollButton(true)
+      } else {
+        setShowScrollButton(false)
+      }
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    // sahifa yuklanganda smooth scroll uchun
+    if (typeof window !== "undefined") {
+      document.documentElement.style.scrollBehavior = "smooth"
+    }
+  }, [])
+
   const handleCardClick = (bookId: string) => {
-    // Changed to string
     router.push(`/book/${bookId}`)
   }
 
@@ -145,11 +165,9 @@ export default function HomePage() {
   }
 
   const addToCart = (book: EnrichedBook, e: React.MouseEvent) => {
-    // Use EnrichedBook type
     e.stopPropagation()
     const cart = JSON.parse(localStorage.getItem("cart") || "[]")
     const exists = cart.find((item: any) => item.id === book.id)
-
     if (!exists) {
       cart.push(book)
       localStorage.setItem("cart", JSON.stringify(cart))
@@ -166,20 +184,30 @@ export default function HomePage() {
     }
   }
 
-  if (!isClient) return null
+  // Memoize newBooks to prevent unnecessary re-renders of BookSwiper
+  const newBooksForSwiper = useMemo(() => {
+    return Array.isArray(books) ? books.filter((book) => isBookNew(book.bookItem.Status.id)).slice(0, 5) : []
+  }, [books]) // Dependency on 'books' state
 
-  const newBooks = Array.isArray(books) ? books.filter((book) => isBookNew(book.bookItem.Status.id)).slice(0, 5) : [] // Use bookItem.Status.id
+  if (!isClient) return null
 
   return (
     <div className="min-h-screen bg-background mt-10">
-      <BookSwiper initialBooks={newBooks} />
+      <BookSwiper initialBooks={newBooksForSwiper} /> {/* Pass the memoized value */}
+      {showScrollButton && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 z-50 h-16 w-16 text-[40px] rounded-full bg-[#ffc82a] hover:bg-[#ffc82a]/90 text-[#21466D] shadow-md transition-all"
+        >
+          {"↑"}
+        </button>
+      )}
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 max-md:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 max-md:gap-1">
           {Array.isArray(books) &&
             books.slice(0, visibleBooks).map((book) => {
               const imageUrl = book.image?.url ? getFullImageUrl(book.image.url) : "/placeholder.svg"
-              const isNew = isBookNew(book.bookItem.Status.id) // Use bookItem.Status.id
-
+              const isNew = isBookNew(book.bookItem.Status.id)
               return (
                 <Card
                   key={book.id}

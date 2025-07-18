@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LogIn } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
+import { toast, Toaster } from "sonner"
 import { useAuthStore } from "@/lib/store/auth"
 import Image from "next/image"
 import { login } from "@/lib/api"
@@ -40,11 +40,7 @@ export default function LoginPage() {
     }
     try {
       const loginRes = (await login(passport, password)) as any
-      if (!loginRes.success) {
-        toast.error(loginRes.message || t("common.loginError"))
-        setLoading(false)
-        return
-      }
+
 
       auth.setToken(loginRes.data.token as string)
       profile.setProfile(loginRes.data.user as any)
@@ -52,13 +48,28 @@ export default function LoginPage() {
       toast.success(t("common.loginSuccess"))
       router.push("/")
     } catch (error) {
+      toast.error(t("common.loginError"))
       setLoading(false)
-      console.error("API error:", error)
     }
   }
 
   return (
     <div className={`min-h-screen relative overflow-hidden ${isDark ? "dark" : ""}`}>
+       <Toaster
+                  position="top-center"
+                  toastOptions={{
+                    style: {
+                      width: "90%",
+                      fontSize: "16px",
+                      padding: "16px 18px",
+                      borderRadius: "10px",
+                      backgroundColor: "#21466D",
+                      color: "white",
+                      textAlign: "center",
+                    },
+                    duration: 3000,
+                  }}
+                />
       <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-screen">
         <div className="w-full flex items-center justify-center gap-12">
           <div className="w-1/2 max-md:w-full">
@@ -108,7 +119,7 @@ export default function LoginPage() {
                     className="w-full h-12 bg-[#21466D] hover:bg-[#212c3f] text-[white] font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
                   >
                     {loading ? <></> : <LogIn className="h-4 w-4 mr-2" />}
-                    {loading ? "...Loading" : t("common.login")}
+                    {loading ? t("common.login") : t("common.login")}
                   </Button>
                 </form>
 
@@ -138,8 +149,8 @@ export default function LoginPage() {
           </div>
           <div className="hidden lg:flex flex-col items-center justify-center flex-1">
             <div className="relative">
-              <div className="relative max-md:hidden w-[400%] h-[400%] ">
-                <Image src="/light-logo.png" alt="USAT Logo" width={300} height={300} className=" object-contain" />
+              <div className="relative max-md:hidden w-[500%] h-[500%] ">
+                <Image src="/login.png" alt="USAT Logo" width={500} height={500} className=" object-contain" />
               </div>
             </div>
           </div>

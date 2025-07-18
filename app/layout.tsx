@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   generator: "abddev09@gmail.com",
   manifest: "/manifest.json",
   themeColor: "#21466D",
+  icons: {
+    icon: "/dark-logo.png", // favicons
+    apple: "/dark-logo.png", // iOS uchun
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -32,12 +36,12 @@ export default function RootLayout({
       {/* Tilni statik 'uz' qilib qo'yamiz */}
       <Head>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" type="image/png" href="/light-logo.png" />
+        <link rel="icon" type="image/png" href="/icon.png" />
         <meta name="theme-color" content="#21466D" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="USAT Kutubxonasi" />
-        <link rel="apple-touch-icon" href="/light-logo.png" />
+        <link rel="apple-touch-icon" href="/icon.png" />
       </Head>
       <body>
         <I18nClientProvider>

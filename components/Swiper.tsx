@@ -131,15 +131,21 @@ export default function BookSwiper({ initialBooks, initialBookItems }: BookSwipe
     fetchData()
   }, [initialBooks, initialBookItems, t])
 
-  // enrichedBooks funksiyasini yangilash
-  const enrichedBooks: EnrichedBook[] = books.map((book) => {
-    const bookItem = bookItems?.find((item) => item.book_id === book.id)
-    return {
-      ...book,
-      bookItem,
-    }
+  const enrichedBooks: EnrichedBook[] = books
+  .filter((book) => {
+    const createdAt = new Date(book.createdAt)
+    const fiveMonthsAgo = new Date()
+    fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5)
+    return createdAt > fiveMonthsAgo
   })
-  console.log(enrichedBooks)
+  .reduce((acc: EnrichedBook[], book) => {
+    const bookItem = bookItems?.find((item) => item.book_id === book.id)
+    if (bookItem && acc.length < 5) {
+      acc.push({ ...book, bookItem })
+    }
+    return acc
+  }, [])
+
   const handleCardClick = (bookId: string) => {
     router.push(`/book/${bookId}`)
   }

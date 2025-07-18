@@ -1,7 +1,7 @@
 "use client"
 import Image from "next/image"
 import Link from "next/link"
-import DarkLogo from "/public/logo-icon.png"
+import DarkLogo from "/public/footer2.png"
 import { Info, Map, PhoneCall } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
