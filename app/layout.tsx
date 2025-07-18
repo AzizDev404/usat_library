@@ -7,6 +7,7 @@ import Footer from "@/components/footer"
 import Head from "next/head"
 import PWAInstallModal from "./install-modal"
 import { I18nClientProvider } from "@/components/i18n-client-provider" // Yangi komponentni import qilish
+import { usePathname } from "next/navigation"
 
 export const metadata: Metadata = {
   title: "USAT Kutubxonasi",
@@ -14,10 +15,6 @@ export const metadata: Metadata = {
   generator: "abddev09@gmail.com",
   manifest: "/manifest.json",
   themeColor: "#21466D",
-  icons: {
-    icon: "/dark-logo.png", // favicons
-    apple: "/dark-logo.png", // iOS uchun
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -30,24 +27,26 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+   const pathname = usePathname()
+  const hideLayout = pathname.startsWith("/login") || pathname.startsWith("/register")
   return (
     <html lang="uz" suppressHydrationWarning>
       {" "}
       {/* Tilni statik 'uz' qilib qo'yamiz */}
       <Head>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" type="image/png" href="/icon.png" />
+        <link rel="icon" type="image/png" href="/light-logo.png" />
         <meta name="theme-color" content="#21466D" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="USAT Kutubxonasi" />
-        <link rel="apple-touch-icon" href="/icon.png" />
+        <link rel="apple-touch-icon" href="/light-logo.png" />
       </Head>
       <body>
         <I18nClientProvider>
           {" "}
           {/* Yangi Client Component bilan o'rash */}
-          <Navbar />
+            {!hideLayout && <Navbar />}
           <main className="min-h-screen bg-background">{children}</main>
           <Toaster
             position="top-center"
@@ -64,7 +63,7 @@ export default function RootLayout({
               duration: 3000,
             }}
           />
-          <Footer />
+           {!hideLayout && <Footer />}
           <PWAInstallModal />
         </I18nClientProvider>
       </body>
