@@ -158,17 +158,21 @@ export default function CartPage() {
 
       // Tanlangan kitoblarni avval buyurtma qilinganmi tekshirish
       for (const selectedBookId of selectedItems) {
-        const alreadyOrdered = userOrders.some(
-          (order: any) => order.user_id === userId && order.book_id === selectedBookId,
-        )
-        if (alreadyOrdered) {
-          const bookName = cartItems.find((item) => item.id === selectedBookId)?.name || selectedBookId
-          toast.warning(t("common.bookAlreadyOrdered", { bookName: bookName }))
-          setIsLoadingOrder(false)
-          return
-        }
-      }
+  const alreadyOrdered = userOrders.some((order: any) => {
+    return (
+      order.user_id === userId &&
+      order.book_id === selectedBookId &&
+      order.status_id !== 6 || 8
+    )
+  })
 
+  if (!alreadyOrdered) {
+    const bookName = cartItems.find((item) => item.id === selectedBookId)?.name || selectedBookId
+    toast.warning(t("common.bookAlreadyOrdered", { bookName: bookName }))
+    setIsLoadingOrder(false)
+    return
+  }
+}
       // Har bir tanlangan kitob uchun post yuboramiz
       await Promise.all(
         selectedItems.map(async (bookId) => {

@@ -1,5 +1,5 @@
 "use client"
-import { generateStaticParams } from "./layout"
+
 import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,11 +24,11 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import Image from "next/image"
-import { getBookItems } from "@/lib/api" // Removed getAllBooks
+import { getBookItems } from "@/lib/api"
 import { getFullImageUrl } from "@/lib/utils"
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery"
 import { useTranslation } from "react-i18next"
-generateStaticParams()
+
 // Define the EnrichedBook interface to match the new data structure
 interface EnrichedBook {
   id: string
@@ -36,7 +36,6 @@ interface EnrichedBook {
   author_id: string | null
   year: number
   page: number
-  books: number
   book_count: number
   description: string
   image_id: string
@@ -96,7 +95,7 @@ interface EnrichedBook {
   }
 }
 
-export default function BookDetailPage() {
+export default function BookDetailPageClient() {
   const { t, i18n } = useTranslation()
   const params = useParams()
   const router = useRouter()
@@ -116,7 +115,7 @@ export default function BookDetailPage() {
     const fetchBookData = async () => {
       try {
         setLoading(true)
-        const bookItemsResponse = await getBookItems() as any
+        const bookItemsResponse = (await getBookItems()) as any
         const bookItemsData = bookItemsResponse.data || []
 
         // Transform all bookItemsData into EnrichedBook structure
@@ -126,7 +125,6 @@ export default function BookDetailPage() {
           author_id: item.Book.author_id,
           year: item.Book.year,
           page: item.Book.page,
-          books: item.Book.books,
           book_count: item.Book.book_count,
           description: item.Book.description,
           image_id: item.Book.image_id,
@@ -137,12 +135,10 @@ export default function BookDetailPage() {
           image: item.Book.image,
           bookItem: item, // Keep the original bookItem nested
         }))
-
         setAllEnrichedBooks(enrichedBooksList) // Store all for related books
 
         // Find the current book
         const currentBook = enrichedBooksList.find((b) => b.id === bookId)
-
         if (currentBook) {
           setBook(currentBook)
         } else {
@@ -157,17 +153,14 @@ export default function BookDetailPage() {
         setLoading(false)
       }
     }
-
     fetchBookData()
   }, [bookId, router, t])
 
   const addToCart = (selectedBook?: EnrichedBook) => {
     const targetBook = selectedBook || book
     if (!targetBook) return
-
     const cart = JSON.parse(localStorage.getItem("cart") || "[]")
     const existingBook = cart.find((item: any) => item.id === targetBook.id)
-
     if (!existingBook) {
       cart.push(targetBook)
       localStorage.setItem("cart", JSON.stringify(cart))
@@ -283,10 +276,8 @@ export default function BookDetailPage() {
   const handleEnd = () => {
     if (!isDragging) return
     setIsDragging(false)
-
     const diff = startX - currentX
     const threshold = 50
-
     if (Math.abs(diff) > threshold) {
       if (diff > 0) {
         // Swipe left - next slide
@@ -370,7 +361,15 @@ export default function BookDetailPage() {
                   className="w-full h-full object-cover"
                 />
               </div>
-
+              <div className="text-center mb-4">
+                {book.book_count > 0 ? (
+                  <p className="text-lg font-semibold text-[#21466D]">
+                    {t("common.available")}: {book.book_count}
+                  </p>
+                ) : (
+                  <p className="text-lg font-semibold text-red-500">{t("common.outOfStock")}</p>
+                )}
+              </div>
               {/* Action Buttons */}
               <div className="space-y-3">
                 {book.bookItem?.PDFFile?.file_url ? ( // Check for file_url existence
@@ -398,14 +397,15 @@ export default function BookDetailPage() {
                     {t("common.pdfNotAvailable")}
                   </Button>
                 )}
-
-                <Button
-                  className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white mb-10"
-                  onClick={() => addToCart()}
-                >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  {t("common.addToCart")}
-                </Button>
+                {book.book_count > 0 && (
+                  <Button
+                    className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white mb-10"
+                    onClick={() => addToCart()}
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    {t("common.addToCart")}
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -461,7 +461,6 @@ export default function BookDetailPage() {
                       <p className="font-medium text-[#21466D]">{book.Auther?.name || t("common.unknown")}</p>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-3">
                     <Calendar className="h-5 w-5 text-[#21466D]" />
                     <div>
@@ -469,7 +468,6 @@ export default function BookDetailPage() {
                       <p className="font-medium text-[#21466D]">{book.year}</p>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-3">
                     <BookOpen className="h-5 w-5 text-[#21466D]" />
                     <div>
@@ -480,7 +478,6 @@ export default function BookDetailPage() {
                     </div>
                   </div>
                 </div>
-
                 <div className="space-y-4">
                   {book.bookItem?.BookCategoryKafedra && (
                     <>
@@ -497,7 +494,6 @@ export default function BookDetailPage() {
                           </p>
                         </div>
                       </div>
-
                       <div className="flex items-center gap-3">
                         <Globe className="h-5 w-5 text-[#21466D]" />
                         <div>
@@ -513,7 +509,6 @@ export default function BookDetailPage() {
                       </div>
                     </>
                   )}
-
                   {/* Language and Alphabet */}
                   {book.bookItem?.Language && (
                     <div className="flex items-center gap-3">
@@ -524,7 +519,6 @@ export default function BookDetailPage() {
                       </div>
                     </div>
                   )}
-
                   {book.bookItem?.Alphabet && (
                     <div className="flex items-center gap-3">
                       <Type className="h-5 w-5 text-[#21466D]" />
@@ -534,7 +528,6 @@ export default function BookDetailPage() {
                       </div>
                     </div>
                   )}
-
                   <div className="flex items-center gap-3">
                     <Hash className="h-5 w-5 text-[#21466D]" />
                     <div>
@@ -580,7 +573,11 @@ export default function BookDetailPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl text-[#21466D]">
                   {book?.bookItem?.BookCategoryKafedra
-                    ? `${book.bookItem.BookCategoryKafedra.category[`name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.category]} ${t("common.relatedBooks")}`
+                    ? `${
+                        book.bookItem.BookCategoryKafedra.category[
+                          `name_${i18n.language}` as keyof typeof book.bookItem.BookCategoryKafedra.category
+                        ]
+                      } ${t("common.relatedBooks")}`
                     : t("common.relatedBooks")}
                 </CardTitle>
                 <div className="flex gap-2">
@@ -677,7 +674,6 @@ export default function BookDetailPage() {
                   ))}
                 </div>
               </div>
-
               {/* Pagination Dots */}
               <div className="flex justify-center mt-6 gap-2">
                 {Array.from({ length: slidesCount }).map((_, index) => (

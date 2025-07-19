@@ -23,7 +23,7 @@ export default function Footer() {
     window.scrollTo(0, 0)
   }, [pathname])
 
-  if (pathname === "/login") return <></>
+  if (pathname === "/login/") return <></>
   if (!mounted) return null
   if (!isClient) return null
 

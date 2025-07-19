@@ -27,8 +27,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-   const pathname = usePathname()
-  const hideLayout = pathname.startsWith("/login") || pathname.startsWith("/register")
   return (
     <html lang="uz" suppressHydrationWarning>
       {" "}
@@ -46,7 +44,7 @@ export default function RootLayout({
         <I18nClientProvider>
           {" "}
           {/* Yangi Client Component bilan o'rash */}
-            {!hideLayout && <Navbar />}
+            <Navbar />
           <main className="min-h-screen bg-background">{children}</main>
           <Toaster
             position="top-center"
@@ -63,7 +61,7 @@ export default function RootLayout({
               duration: 3000,
             }}
           />
-           {!hideLayout && <Footer />}
+           <Footer />
           <PWAInstallModal />
         </I18nClientProvider>
       </body>

@@ -185,7 +185,7 @@ export default function Navbar() {
     }
   }
 
-  if (pathname === "/login") return <></>
+  if (pathname === "/login/") return <></>
   if (!mounted) return null
   if (!isClient) return null
 
