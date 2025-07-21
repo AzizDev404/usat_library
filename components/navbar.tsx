@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import DarkLogo from "/public/navbar2.png"
 import { useAuthStore } from "@/lib/store/auth"
 import { toast } from "sonner"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { getAllBooks } from "@/lib/api"
 import { getFullImageUrl } from "@/lib/utils"
 import { useTranslation } from "react-i18next" // i18n import
@@ -153,19 +153,26 @@ export default function Navbar() {
   }, [showBooksPanel])
 
   useEffect(() => {
-    setIsClient(true)
-    setMounted(true)
-    const cart = JSON.parse(localStorage.getItem("cart") || "[]")
-    setCartCount(cart.length)
+  setIsClient(true)
+  setMounted(true)
 
-    const handleStorageChange = () => {
-      const updatedCart = JSON.parse(localStorage.getItem("cart") || "[]")
-      setCartCount(updatedCart.length)
-    }
+  const userId = localStorage.getItem("id")
+  if (!userId) return
 
-    window.addEventListener("storage", handleStorageChange)
-    return () => window.removeEventListener("storage", handleStorageChange)
-  }, [])
+  const cart = JSON.parse(localStorage.getItem("cart") || "[]")
+  const userCart = cart.filter((item: any) => item.userId === userId)
+  setCartCount(userCart.length)
+
+  const handleStorageChange = () => {
+    const updatedCart = JSON.parse(localStorage.getItem("cart") || "[]")
+    const updatedUserCart = updatedCart.filter((item: any) => item.userId === userId)
+    setCartCount(updatedUserCart.length)
+  }
+
+  window.addEventListener("storage", handleStorageChange)
+  return () => window.removeEventListener("storage", handleStorageChange)
+}, [])
+
 
   const clearAllFilters = () => {
     setSearchTerm("")
@@ -184,6 +191,47 @@ export default function Navbar() {
       clearAllFilters()
     }
   }
+    const [notification, setNotification] = useState<string | null>(null)
+  const router = useRouter()
+  
+  const showNotification = (message: string) => {
+    setNotification(message)
+    setTimeout(() => setNotification(null), 3000)
+  }
+  const handleLogout = () => {
+    localStorage.removeItem("token")
+    localStorage.removeItem("id")
+    useAuthStore.getState().clearToken()
+    showNotification(t("common.loggedOut"))
+    router.push("/login")
+  }
+const confirmLogout = () => {
+  toast.custom((t_toast) => (
+    <div className=" dark:bg-zinc-900  rounded-xl w-fit animate-in fade-in zoom-in flex flex-col gap-4">
+      <div className="text-lg font-semibold text-[white] dark:text-white">
+        {t("common.confirmLogout")}
+      </div>
+      <p className="text-sm text-[white]">{t("common.logoutMessage")}</p>
+      <div className="flex justify-center gap-3 pt-2">
+        <button
+          onClick={() => toast.dismiss(t_toast)}
+          className="px-4 py-2 rounded-lg border border-[white]/40 hover:bg-[#21466D]/10 text-[white] text-sm font-medium transition-all duration-200"
+        >
+          {t("common.cancel")}
+        </button>
+        <button
+          onClick={() => {
+            handleLogout()
+            toast.dismiss(t_toast)
+          }}
+          className="px-4 py-2 rounded-lg bg-[white] text-[#1c3b5c] text-sm font-medium transition-all duration-200"
+        >
+          {t("common.yesLogout")}
+        </button>
+      </div>
+    </div>
+  ))
+}
 
   if (pathname === "/login/") return <></>
   if (!mounted) return null
@@ -365,24 +413,26 @@ export default function Navbar() {
                   <h3 className="text-sm font-semibold text-[#21466D]">
                     {t("common.results")} ({filteredBooks.length})
                   </h3>
-                  {filteredBooks.slice(0, 5).map((book) => (
-                    <Link
-                      href={`/book/${book.id}`}
-                      key={book.id}
-                      className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-md transition"
-                    >
-                      <Image
-                        src={book.image.url || "/placeholder.svg"}
-                        alt={book.name}
-                        width={40}
-                        height={60}
-                        className="rounded-md object-cover flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold text-[#21466D] line-clamp-1">{book.name}</h4>
-                        <p className="text-xs text-[#21466D]/70 line-clamp-2">{book.description}</p>
-                      </div>
-                    </Link>
+                  {filteredBooks.map((book) => (
+                   <Link
+  href={`/book/${book.id}`}
+  key={book.id}
+  onClick={toggleMobileSearch}
+  className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-md transition"
+>
+  <Image
+    src={book.image?.url ? getFullImageUrl(book.image.url) : "/placeholder.svg"}
+    alt={book.name}
+    width={40}
+    height={60}
+    className="rounded-md object-cover flex-shrink-0"
+  />
+  <div className="flex-1 min-w-0">
+    <h4 className="text-sm font-semibold text-[#21466D] line-clamp-1">{book.name}</h4>
+    <p className="text-xs text-[#21466D]/70 line-clamp-2">{book.description}</p>
+  </div>
+</Link>
+
                   ))}
                   {filteredBooks.length === 0 && (
                     <div className="text-center text-[#21466D]/60 text-sm py-4">{t("common.noResultsFound")}</div>
@@ -451,15 +501,7 @@ export default function Navbar() {
                 variant="ghost"
                 size="icon"
                 className="flex flex-col w-full items-center justify-center text-xs text-red-500 hover:bg-red-50 transition"
-                onClick={() => {
-                  localStorage.removeItem("userId")
-                  localStorage.removeItem("cart")
-                  toast.success(t("common.loggedOut"), {
-                    position: "top-center",
-                  })
-                  window.location.href = "/login"
-                }}
-              >
+                onClick={() => confirmLogout()}>
                 <LogOut className="h-5 w-5" />
                 <span>{t("common.logout")}</span>
               </Button>

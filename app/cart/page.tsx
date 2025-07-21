@@ -89,9 +89,16 @@ export default function CartPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const cart = JSON.parse(localStorage.getItem("cart") || "[]")
-    setCartItems(cart)
-  }, [])
+  const userId = localStorage.getItem("id")
+  if (!userId) return // agar user login qilmagan bo‘lsa, hech nima ko‘rsatmaymiz
+
+  const cart = JSON.parse(localStorage.getItem("cart") || "[]")
+
+  const userCart = cart.filter((item: any) => item.userId === userId)
+
+  setCartItems(userCart)
+}, [])
+
 
   useEffect(() => {
     setIsClient(true)

@@ -157,19 +157,31 @@ export default function BookDetailPageClient() {
   }, [bookId, router, t])
 
   const addToCart = (selectedBook?: EnrichedBook) => {
-    const targetBook = selectedBook || book
-    if (!targetBook) return
-    const cart = JSON.parse(localStorage.getItem("cart") || "[]")
-    const existingBook = cart.find((item: any) => item.id === targetBook.id)
-    if (!existingBook) {
-      cart.push(targetBook)
-      localStorage.setItem("cart", JSON.stringify(cart))
-      toast.success(t("common.bookAddedToCart", { bookName: targetBook.name }))
-      window.dispatchEvent(new Event("storage"))
-    } else {
-      toast.warning(t("common.bookAlreadyInCart", { bookName: targetBook.name }))
-    }
+  const targetBook = selectedBook || book
+  if (!targetBook) return
+
+  const userId = localStorage.getItem("id")
+  if (!userId) {
+    toast.warning("User ID topilmadi. Iltimos qayta login qiling.")
+    return
   }
+
+  const cart = JSON.parse(localStorage.getItem("cart") || "[]")
+
+  const existingBook = cart.find(
+    (item: any) => item.id === targetBook.id && item.userId === userId
+  )
+
+  if (!existingBook) {
+    cart.push({ ...targetBook, userId })
+    localStorage.setItem("cart", JSON.stringify(cart))
+    toast.success(t("common.bookAddedToCart", { bookName: targetBook.name }))
+    window.dispatchEvent(new Event("storage"))
+  } else {
+    toast.warning(t("common.bookAlreadyInCart", { bookName: targetBook.name }))
+  }
+}
+
 
   const openPDF = () => {
     if (book?.bookItem?.PDFFile?.file_url) {
@@ -180,18 +192,36 @@ export default function BookDetailPageClient() {
   }
 
   const downloadPDF = () => {
-    if (book?.bookItem?.PDFFile?.file_url) {
-      const link = document.createElement("a")
-      link.href = book.bookItem.PDFFile.file_url
-      link.download = book.bookItem.PDFFile.original_name || `${book.name}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      toast.success(t("common.pdfDownloading"))
-    } else {
-      toast.warning(t("common.pdfNotAvailable"))
+  if (book?.bookItem?.PDFFile?.file_url) {
+    const downloadUrl = book.bookItem.PDFFile.file_url
+    const filename = book.bookItem.PDFFile.original_name || `${book.name}.pdf`
+
+    // HTML content that triggers download and auto-closes tab
+    const downloadPage = `
+      <html>
+        <body>
+          <a id="dl" href="${downloadUrl}" download="${filename}"></a>
+          <script>
+            document.getElementById("dl").click();
+            setTimeout(() => window.close(), 1000);
+          </script>
+        </body>
+      </html>
+    `
+
+    // Open new tab
+    const newWindow = window.open()
+    if (newWindow) {
+      newWindow.document.write(downloadPage)
+      newWindow.document.close()
     }
+
+    toast.success(t("common.pdfDownloading"))
+  } else {
+    toast.warning(t("common.pdfNotAvailable"))
   }
+}
+
 
   // Get related books (exclude current book)
   const getRelatedBooks = () => {

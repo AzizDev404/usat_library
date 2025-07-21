@@ -242,24 +242,32 @@ const FilterPage = () => {
     }
   }
 
-  const addToCart = (book: EnrichedBook, e: React.MouseEvent) => {
-    e.stopPropagation()
-    const cart = JSON.parse(localStorage.getItem("cart") || "[]")
-    const existingBook = cart.find((item: any) => item.id === book.id)
+  const addToCart = (selectedBook?: EnrichedBook) => {
+  const targetBook = selectedBook 
+  if (!targetBook) return
 
-    if (!existingBook) {
-      cart.push(book)
-      localStorage.setItem("cart", JSON.stringify(cart))
-      toast.success(t("common.bookAddedToCart", { bookName: book.name }), {
-        description: t("common.orderConfirmationDesc"),
-        position: "top-center",
-        duration: 3000,
-      })
-      window.dispatchEvent(new Event("storage"))
-    } else {
-      toast.warning(t("common.bookAlreadyInCart", { bookName: book.name }))
-    }
+  const userId = localStorage.getItem("id")
+  if (!userId) {
+    toast.warning("User ID topilmadi. Iltimos qayta login qiling.")
+    return
   }
+
+  const cart = JSON.parse(localStorage.getItem("cart") || "[]")
+
+  const existingBook = cart.find(
+    (item: any) => item.id === targetBook.id && item.userId === userId
+  )
+
+  if (!existingBook) {
+    cart.push({ ...targetBook, userId })
+    localStorage.setItem("cart", JSON.stringify(cart))
+    toast.success(t("common.bookAddedToCart", { bookName: targetBook.name }))
+    window.dispatchEvent(new Event("storage"))
+  } else {
+    toast.warning(t("common.bookAlreadyInCart", { bookName: targetBook.name }))
+  }
+}
+
 
   const openPDF = (book: EnrichedBook, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -576,7 +584,7 @@ const FilterPage = () => {
                   <CardFooter className="p-4 pt-0 flex flex-col gap-2">
                     <Button
                       className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white"
-                      onClick={(e) => isTokenyes(() => addToCart(book, e))}
+                      onClick={(e) => isTokenyes(() => addToCart(book))}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
                       {t("common.addBookToCart")}

@@ -164,23 +164,29 @@ export default function HomePage() {
     }
   }
 
-  const addToCart = (book: EnrichedBook, e: React.MouseEvent) => {
-    e.stopPropagation()
+  const addToCart = (selectedBook?: EnrichedBook) => {
+    const targetBook = selectedBook 
+    if (!targetBook) return
+  
+    const userId = localStorage.getItem("id")
+    if (!userId) {
+      toast.warning("User ID topilmadi. Iltimos qayta login qiling.")
+      return
+    }
+  
     const cart = JSON.parse(localStorage.getItem("cart") || "[]")
-    const exists = cart.find((item: any) => item.id === book.id)
-    if (!exists) {
-      cart.push(book)
+  
+    const existingBook = cart.find(
+      (item: any) => item.id === targetBook.id && item.userId === userId
+    )
+  
+    if (!existingBook) {
+      cart.push({ ...targetBook, userId })
       localStorage.setItem("cart", JSON.stringify(cart))
-      toast.success(t("common.bookAddedToCart", { bookName: book.name }), {
-        position: "top-center",
-        duration: 3000,
-      })
+      toast.success(t("common.bookAddedToCart", { bookName: targetBook.name }))
       window.dispatchEvent(new Event("storage"))
     } else {
-      toast.error(t("common.bookAlreadyInCart", { bookName: book.name }), {
-        position: "top-center",
-        duration: 2500,
-      })
+      toast.warning(t("common.bookAlreadyInCart", { bookName: targetBook.name }))
     }
   }
 
@@ -203,7 +209,7 @@ export default function HomePage() {
         </button>
       )}
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 max-md:gap-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 max-md:gap-1">
           {Array.isArray(books) &&
             books.slice(0, visibleBooks).map((book) => {
               const imageUrl = book.image?.url ? getFullImageUrl(book.image.url) : "/placeholder.svg"
@@ -233,7 +239,7 @@ export default function HomePage() {
                       title={book.name}
                       className="font-semibold text-lg mb-2 group-hover:text-[#21466D] transition-colors truncate"
                     >
-                      {book.name.length > 20 ? book.name.slice(0, 20) + "..." : book.name}
+                      {book.name.length > 20 ? book.name.slice(0, 60) + "..." : book.name}
                     </h3>
                     <div className="space-y-1 text-sm text-muted-foreground mb-4">
                       <p>
@@ -250,7 +256,7 @@ export default function HomePage() {
                   <CardFooter className="p-4 pt-0 flex flex-col gap-2 max-md:gap-1 max-md:p-2">
                     <Button
                       className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white flex items-center justify-center gap-2"
-                      onClick={(e) => isTokenyes(() => addToCart(book, e))}
+                      onClick={(e) => isTokenyes(() => addToCart(book))}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" /> {t("common.addBookToCart")}
                     </Button>

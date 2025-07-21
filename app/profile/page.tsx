@@ -226,9 +226,27 @@ export default function ProfilePage() {
     }
   }
 
-  const handleSave = () => {
-    showNotification(t("common.infoSaved"))
+const handleSave = () => {
+  const storedFullName = localStorage.getItem("fullname")
+  const storedPhone = localStorage.getItem("phone")
+
+  const isFullNameChanged = storedFullName !== profile.fullName
+  const isPhoneChanged = storedPhone !== profile.phone
+
+  if (isFullNameChanged) {
+    localStorage.setItem("fullname", profile.fullName)
   }
+
+  if (isPhoneChanged) {
+    localStorage.setItem("phone", profile.phone)
+  }
+
+  if (isFullNameChanged || isPhoneChanged) {
+    showNotification(t("common.infoSaved"))
+  } else {
+    showNotification(t("common.nothingChanged")) // ixtiyoriy: o‘zgartirish yo‘q
+  }
+}
 
   const handleLogout = () => {
     localStorage.removeItem("token")
@@ -239,30 +257,33 @@ export default function ProfilePage() {
   }
 
   const confirmLogout = () => {
-    toast.custom((t_toast) => (
-      <div className="bg-white dark:bg-zinc-900 shadow-xl rounded-lg border border-[#21466D]/20 p-6 w-fit animate-in fade-in zoom-in flex flex-col gap-4">
-        <div className="text-lg font-semibold text-[#21466D] dark:text-white">{t("common.confirmLogout")}</div>
-        <p className="text-sm text-muted-foreground">{t("common.logoutMessage")}</p>
-        <div className="flex justify-center gap-3 pt-2">
-          <button
-            onClick={() => toast.dismiss(t_toast)}
-            className="px-4 py-2 rounded-lg border border-[#21466D]/20 hover:bg-[#21466D]/10 text-[#21466D] text-sm font-medium transition-all duration-200"
-          >
-            {t("common.cancel")}
-          </button>
-          <button
-            onClick={() => {
-              handleLogout()
-              toast.dismiss(t_toast)
-            }}
-            className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 text-sm font-medium transition-all duration-200"
-          >
-            {t("common.yesLogout")}
-          </button>
-        </div>
+  toast.custom((t_toast) => (
+    <div className=" dark:bg-zinc-900  rounded-xl w-fit animate-in fade-in zoom-in flex flex-col gap-4">
+      <div className="text-lg font-semibold text-[white] dark:text-white">
+        {t("common.confirmLogout")}
       </div>
-    ))
-  }
+      <p className="text-sm text-[white]">{t("common.logoutMessage")}</p>
+      <div className="flex justify-center gap-3 pt-2">
+        <button
+          onClick={() => toast.dismiss(t_toast)}
+          className="px-4 py-2 rounded-lg border border-[white]/40 hover:bg-[#21466D]/10 text-[white] text-sm font-medium transition-all duration-200"
+        >
+          {t("common.cancel")}
+        </button>
+        <button
+          onClick={() => {
+            handleLogout()
+            toast.dismiss(t_toast)
+          }}
+          className="px-4 py-2 rounded-lg bg-[white] text-[#1c3b5c] text-sm font-medium transition-all duration-200"
+        >
+          {t("common.yesLogout")}
+        </button>
+      </div>
+    </div>
+  ))
+}
+
 
   const toggleOrderExpansion = (orderId: string) => {
     setExpandedOrders((prev) => (prev.includes(orderId) ? prev.filter((id) => id !== orderId) : [...prev, orderId]))
@@ -609,6 +630,7 @@ export default function ProfilePage() {
                     {t("common.fullName")}
                   </Label>
                   <Input
+                  disabled={true}
                     id="fullName"
                     value={profile.fullName}
                     onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
@@ -620,6 +642,7 @@ export default function ProfilePage() {
                     {t("common.phone")}
                   </Label>
                   <Input
+                  disabled={true}
                     id="phone"
                     value={profile.phone}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
@@ -647,23 +670,7 @@ export default function ProfilePage() {
                   </Select>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-[#21466D]/10">
-                <Button
-                  onClick={handleSave}
-                  className="bg-[#21466D] hover:bg-[#21466D]/90 text-white flex-1 h-12 font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
-                >
-                  <Save className="h-5 w-5 mr-2" />
-                  {t("common.saveInfo")}
-                </Button>
-                <Button
-                  onClick={confirmLogout}
-                  variant="outline"
-                  className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 hover:text-red-700 flex-1 h-12 font-semibold text-base transition-all duration-300 hover:scale-[1.02] dark:border-red-800 dark:hover:bg-red-900/20 bg-transparent"
-                >
-                  <LogOut className="h-5 w-5 mr-2" />
-                  {t("common.logoutFromSystem")}
-                </Button>
-              </div>
+              
             </CardContent>
           </Card>
         )

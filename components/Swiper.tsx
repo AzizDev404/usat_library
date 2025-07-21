@@ -191,7 +191,7 @@ export default function BookSwiper({ initialBooks, initialBookItems }: BookSwipe
       {isMobile ? (
         <div className="w-[100%] mx-auto px-2 py-6">
           <Swiper
-            slidesPerView={1.2}
+            slidesPerView={1}
             spaceBetween={15}
             centeredSlides={true}
             autoplay={{
@@ -229,7 +229,7 @@ export default function BookSwiper({ initialBooks, initialBookItems }: BookSwipe
                   </div>
                   <div className="p-4 space-y-3">
                     <h3 className="text-lg font-bold text-[#21466D] line-clamp-2 leading-tight">
-                      {book.name.length > 20 ? `${book.name.slice(0, 20)}...` : book.name}
+                      {book.name.length > 20 ? `${book.name.slice(0, 50)}...` : book.name}
                     </h3>
                     <p className="text-sm text-[#21466D]/70">
                       {t("common.author")}: {book.Auther?.name || t("common.unknown")}
@@ -295,7 +295,7 @@ export default function BookSwiper({ initialBooks, initialBookItems }: BookSwipe
           <div className="relative overflow-hidden bg-gradient-to-br bg-[#21466D]/30 -mt-10 to-gray-100 py-16 h-full">
             <div className="w-[100%] mx-auto">
               <Swiper
-                slidesPerView={1.2}
+                slidesPerView={1}
                 spaceBetween={20}
                 centeredSlides={true}
                 autoplay={{
@@ -317,11 +317,11 @@ export default function BookSwiper({ initialBooks, initialBookItems }: BookSwipe
                 loop={true}
                 breakpoints={{
                   768: {
-                    slidesPerView: 1.4,
+                    slidesPerView: 1,
                     spaceBetween: 30,
                   },
                   1024: {
-                    slidesPerView: 1.6,
+                    slidesPerView: 1.2,
                     spaceBetween: 35,
                   },
                   1280: {
