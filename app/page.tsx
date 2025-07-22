@@ -203,13 +203,13 @@ export default function HomePage() {
       {showScrollButton && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-50 h-16 w-16 text-[40px] rounded-full bg-[#ffc82a] hover:bg-[#ffc82a]/90 text-[#21466D] shadow-md transition-all"
+          className="fixed bottom-6 max-md:bottom-20 max-md:w-12 max-md:h-12 max-md:text-[25px] right-6 z-50 h-16 w-16 text-[40px] rounded-full bg-[#ffc82a] hover:bg-[#ffc82a]/90 text-[#21466D] shadow-md transition-all"
         >
           {"↑"}
         </button>
       )}
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 max-md:gap-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 max-md:gap-4">
           {Array.isArray(books) &&
             books.slice(0, visibleBooks).map((book) => {
               const imageUrl = book.image?.url ? getFullImageUrl(book.image.url) : "/placeholder.svg"
@@ -235,12 +235,14 @@ export default function HomePage() {
                         </Badge>
                       )}
                     </div>
-                    <h3
-                      title={book.name}
-                      className="font-semibold text-lg mb-2 group-hover:text-[#21466D] transition-colors truncate"
-                    >
-                      {book.name.length > 20 ? book.name.slice(0, 60) + "..." : book.name}
-                    </h3>
+                   <h3
+  title={book.name}
+  className="font-semibold text-lg mb-2 group-hover:text-[#21466D] transition-colors line-clamp-2 min-h-[3.5rem]"
+>
+  {book.name.split(/[:\s]+/).slice(0, 3).join(" ")}
+  {book.name.split(/[:\s]+/).length > 3 ? "..." : ""}
+</h3>
+
                     <div className="space-y-1 text-sm text-muted-foreground mb-4">
                       <p>
                         {book.page} {t("common.page")}

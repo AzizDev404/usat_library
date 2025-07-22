@@ -228,9 +228,14 @@ export default function BookSwiper({ initialBooks, initialBookItems }: BookSwipe
                     </Badge>
                   </div>
                   <div className="p-4 space-y-3">
-                    <h3 className="text-lg font-bold text-[#21466D] line-clamp-2 leading-tight">
-                      {book.name.length > 20 ? `${book.name.slice(0, 50)}...` : book.name}
-                    </h3>
+                    <h3
+  title={book.name}
+  className="font-semibold text-lg mb-2 group-hover:text-[#21466D] transition-colors line-clamp-2 min-h-[3.5rem]"
+>
+  {book.name.split(/[:\s]+/).slice(0, 3).join(" ")}
+  {book.name.split(/[:\s]+/).length > 3 ? "..." : ""}
+</h3>
+
                     <p className="text-sm text-[#21466D]/70">
                       {t("common.author")}: {book.Auther?.name || t("common.unknown")}
                     </p>
@@ -357,9 +362,14 @@ export default function BookSwiper({ initialBooks, initialBookItems }: BookSwipe
                           </div>
                           <div className="space-y-6 flex flex-col justify-center">
                             <div>
-                              <h3 className="text-lg font-bold text-[#21466D] line-clamp-2 leading-tight">
-                                {book.name.length > 20 ? `${book.name.slice(0, 20)}...` : book.name}
-                              </h3>
+                              <h3
+  title={book.name}
+  className="font-semibold text-lg mb-2 text-[#21466D] transition-colors"
+>
+  {book.name.split(/[:\s]+/).slice(0, 3).join(" ")}
+  {book.name.split(/[:\s]+/).length > 3 ? "..." : ""}
+</h3>
+
                               <p className="text-lg text-[#21466D]/80 dark:text-white/80 mb-4">
                                 {t("common.author")}: {book.Auther?.name || t("common.unknown")}
                               </p>
