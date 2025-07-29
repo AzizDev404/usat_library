@@ -239,8 +239,7 @@ const confirmLogout = () => {
 
   return (
     <>
-      {/* Upper Navbar */}
-      <nav className="sticky top-0 z-50 w-full border-b bg-background py-5">
+      <nav className="md:sticky top-0 z-50 w-full border-b bg-background py-5">
         <div className="container flex h-16 items-center justify-between px-4">
           <Link href="/#top" className="flex items-center space-x-2 max-md:justify-center">
             <div className="w-[250px] max-md:w-[180px] max-md:flex max-md:justify-center">
@@ -248,7 +247,6 @@ const confirmLogout = () => {
             </div>
           </Link>
 
-          {/* Desktop Search */}
           <div className="hidden md:flex container mx-auto items-center gap-4 relative w-[70%] text-[#21466D]">
             <Search className="absolute left-10 w-5 h-5" />
             <Input
@@ -385,7 +383,7 @@ const confirmLogout = () => {
 
       {/* Mobile Search Panel */}
       {showMobileSearch && (
-        <div className="fixed top-[100px] left-0 right-0 z-40 bg-white border-b shadow-lg md:hidden">
+        <div className="fixed top-[100px] left-0 right-0 z-50 bg-white border-b shadow-lg md:hidden">
           <div className="p-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />

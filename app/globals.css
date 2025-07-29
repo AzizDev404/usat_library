@@ -2,7 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-
+body{
+  font-family: "Comfortaa", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+    font-weight: 500;
+}
 
 :root {
   --primary: #ffc82a;

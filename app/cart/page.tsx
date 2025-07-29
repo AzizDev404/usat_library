@@ -1,5 +1,4 @@
 "use client"
-
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -89,16 +88,12 @@ export default function CartPage() {
   const router = useRouter()
 
   useEffect(() => {
-  const userId = localStorage.getItem("id")
-  if (!userId) return // agar user login qilmagan bo‘lsa, hech nima ko‘rsatmaymiz
-
-  const cart = JSON.parse(localStorage.getItem("cart") || "[]")
-
-  const userCart = cart.filter((item: any) => item.userId === userId)
-
-  setCartItems(userCart)
-}, [])
-
+    const userId = localStorage.getItem("id")
+    if (!userId) return // agar user login qilmagan bo‘lsa, hech nima ko‘rsatmaymiz
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]")
+    const userCart = cart.filter((item: any) => item.userId === userId)
+    setCartItems(userCart)
+  }, [])
 
   useEffect(() => {
     setIsClient(true)
@@ -148,42 +143,39 @@ export default function CartPage() {
       toast.warning(t("common.selectAtLeastOneBook"))
       return
     }
-
     setIsLoadingOrder(true)
     const userId = localStorage.getItem("id")
-
     if (!userId) {
       toast.warning(t("common.loginRequired"))
       router.push("/login")
       setIsLoadingOrder(false)
       return
     }
-
     try {
       const userOrdersResponse = (await getUserOrders()) as any
       const userOrders = userOrdersResponse.data || []
 
       // Tanlangan kitoblarni avval buyurtma qilinganmi tekshirish
       for (const selectedBookId of selectedItems) {
-  const alreadyOrdered = userOrders.some((order: any) => {
-    return (
-      order.user_id === userId &&
-      order.book_id === selectedBookId &&
-      order.status_id !== 6 || 8
-    )
-  })
+        const alreadyOrdered = userOrders.some((order: any) => {
+          return (
+            order.user_id === userId && order.book_id === selectedBookId && ![6, 8].includes(order.status_id) // status_id 6 yoki 8 bo'lmasa (ya'ni, bekor qilinmagan yoki tugallanmagan bo'lsa)
+          )
+        })
+        // Agar kitob allaqachon buyurtma qilingan bo'lsa, ogohlantirish beramiz
+        if (alreadyOrdered) {
+          // <--- O'ZGARTIRILGAN QATOR
+          const bookName = cartItems.find((item) => item.id === selectedBookId)?.name || selectedBookId
+          toast.warning(t("common.bookAlreadyOrdered", { bookName: bookName }))
+          setIsLoadingOrder(false)
+          return // Jarayonni to'xtatamiz
+        }
+      }
 
-  if (!alreadyOrdered) {
-    const bookName = cartItems.find((item) => item.id === selectedBookId)?.name || selectedBookId
-    toast.warning(t("common.bookAlreadyOrdered", { bookName: bookName }))
-    setIsLoadingOrder(false)
-    return
-  }
-}
       // Har bir tanlangan kitob uchun post yuboramiz
       await Promise.all(
         selectedItems.map(async (bookId) => {
-          await postUserOrder(bookId as any) 
+          await postUserOrder(bookId as any)
         }),
       )
 
@@ -248,7 +240,6 @@ export default function CartPage() {
           </Button>
         </div>
       </div>
-
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
           {cartItems.map((book, index) => (
@@ -258,7 +249,9 @@ export default function CartPage() {
               style={{ animationDelay: `${index * 0.1}s` }}
               onClick={(e) => handleCardClick(book.id, e)}
             >
-              <div className="flex gap-4 flex-col sm:flex-row"> {/* Added flex-col for mobile */}
+              <div className="flex gap-4 flex-col sm:flex-row">
+                {" "}
+                {/* Added flex-col for mobile */}
                 <input
                   type="checkbox"
                   checked={selectedItems.includes(book.id)}
@@ -266,7 +259,9 @@ export default function CartPage() {
                   className="mt-2 accent-[#21466D] w-5 h-5 self-start sm:self-auto"
                   onClick={(e) => e.stopPropagation()}
                 />
-                <div className="w-full sm:w-28 h-40 flex-shrink-0"> {/* Adjusted width for mobile */}
+                <div className="w-full sm:w-28 h-40 flex-shrink-0">
+                  {" "}
+                  {/* Adjusted width for mobile */}
                   <img
                     src={getFullImageUrl(book.image?.url) || "/placeholder.svg"}
                     alt={book.name}
@@ -328,7 +323,6 @@ export default function CartPage() {
             </Card>
           ))}
         </div>
-
         <div className="lg:col-span-1">
           <Card className="sticky top-28 animate-scale-in">
             <CardHeader>

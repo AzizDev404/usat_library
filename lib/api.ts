@@ -40,6 +40,11 @@ export const getBookItems = async () => {
   const res = await axiosInstance.get("/book-items")
   return res.data
 }
+export const getBooks = async (): Promise<BooksResponse> => {
+  const res = await axiosInstance.get<BooksResponse>("/book-items")  
+  return res.data
+}
+
 
 
 interface BooksResponse {
@@ -59,7 +64,8 @@ export const getAllBooks = async (): Promise<BooksResponse> => {
 
 // GET: /alluser-order
 export const getUserOrders = async () => {
-    const res = await axiosInstance.get("/alluser-order")
+    const res = await axiosInstance.get(`/alluser-order`)
+    console.log("orders",res)
     return res.data
 }
 

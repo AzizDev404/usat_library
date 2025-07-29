@@ -8,6 +8,7 @@ import Head from "next/head"
 import PWAInstallModal from "./install-modal"
 import { I18nClientProvider } from "@/components/i18n-client-provider" // Yangi komponentni import qilish
 import { usePathname } from "next/navigation"
+import ScrollToTopButton from "@/components/ScrollToTop"
 
 export const metadata: Metadata = {
   title: "USAT Kutubxonasi",
@@ -39,10 +40,12 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="USAT Kutubxonasi" />
         <link rel="apple-touch-icon" href="/light-logo.png" />
+        <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap" rel="stylesheet" />
       </Head>
       <body>
         <I18nClientProvider>
           {" "}
+          <ScrollToTopButton/>
           {/* Yangi Client Component bilan o'rash */}
             <Navbar />
           <main className="min-h-screen bg-background">{children}</main>

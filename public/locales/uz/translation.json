@@ -1,5 +1,6 @@
 {
   "common": {
+    "loading":"Yuklanmoqda",
     "elementCount":"Buyurtmalar soni: {{count}}",
     "countUnit": "dona",
     "back": "Orqaga",
@@ -76,7 +77,7 @@
     "openPdf": "PDF ni ochish",
     "noActiveOrders": "Hozircha faol buyurtmalar yo'q",
     "noArchivedOrders": "Arxivda hech narsa yo'q",
-    "fullName": "F.I.Sh",
+    "fullname": "F.I.Sh",
     "phone": "Telefon",
     "direction": "Yo'nalishi",
     "group": "Guruh",

@@ -28,7 +28,7 @@ export default function Footer() {
   if (!isClient) return null
 
   return (
-    <footer className="bg-[#21466D] text-white py-10 mt-16 max-md:mb-10 max-md:mt-2">
+    <footer className="bg-[#21466D] text-white py-10 mt-16 max-md:mb-10 max-md:mt-2"  >
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 ">
         {/* Logo va nom */}
         <Link href="/" className="flex items-center space-x-2 max-md:w-full max-md:justify-start">

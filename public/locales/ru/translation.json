@@ -1,5 +1,6 @@
 {
   "common": {
+    "loading":"Загрузка",
     "elementCount":"Количество элементов: {{count}}",
     "countUnit":"штук",
     "back": "Назад",
@@ -76,7 +77,7 @@
     "openPdf": "Открыть PDF",
     "noActiveOrders": "Активных заказов пока нет",
     "noArchivedOrders": "В архиве ничего нет",
-    "fullName": "Ф.И.О",
+    "fullname": "Ф.И.О",
     "phone": "Телефон",
     "direction": "Направление",
     "group": "Группа",

@@ -339,7 +339,7 @@ const FilterPage = () => {
 
       {/* Mobile Filter Overlay */}
       {showMobileFilter && (
-        <div className="fixed inset-0 z-50 md:hidden overflow-y-auto h-full">
+        <div className="fixed inset-0 z-40 md:hidden overflow-y-auto h-full">
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowMobileFilter(false)} />
 

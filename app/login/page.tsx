@@ -1,47 +1,48 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { LogIn } from "lucide-react"
+import { LogIn, User, Lock } from "lucide-react" // lucide-react ikonalarini import qilamiz
 import { useRouter } from "next/navigation"
-import { toast, Toaster } from "sonner"
+import { toast } from "sonner" // Toaster komponentini layoutga ko'chiramiz
 import { useAuthStore } from "@/lib/store/auth"
 import Image from "next/image"
 import { login } from "@/lib/api"
 import { useProfileStore } from "@/lib/store/profile"
-import { useTranslation } from "react-i18next" // i18n import
+import { useTranslation } from "react-i18next"
+import { motion } from "framer-motion" // framer-motion import qilamiz
 
 export default function LoginPage() {
-  const { t } = useTranslation() // useTranslation hook'ini ishlatish
+  const { t } = useTranslation()
   const [passport, setPassport] = useState("")
   const [password, setPassword] = useState("")
-  const [isDark, setIsDark] = useState(false)
   const { token } = useAuthStore()
   const router = useRouter()
   const [isClient, setIsClient] = useState(false)
   const [loading, setLoading] = useState(false)
+
   useEffect(() => {
-    setIsClient(true) // Clientda ekanligingizni aniqlash
+    setIsClient(true)
   }, [])
+
   const auth = useAuthStore()
   const profile = useProfileStore()
+
   if (!isClient) return null
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     if (!passport || !password) {
       toast.error(t("common.allFieldsRequired"))
+      setLoading(false)
       return
     }
     try {
       const loginRes = (await login(passport, password)) as any
-
-
       auth.setToken(loginRes.data.token as string)
       profile.setProfile(loginRes.data.user as any)
       setLoading(false)
@@ -54,106 +55,148 @@ export default function LoginPage() {
   }
 
   return (
-    <div className={`min-h-screen relative overflow-hidden ${isDark ? "dark" : ""}`}>
-       <Toaster
-                  position="top-center"
-                  toastOptions={{
-                    style: {
-                      width: "90%",
-                      fontSize: "16px",
-                      padding: "16px 18px",
-                      borderRadius: "10px",
-                      backgroundColor: "#21466D",
-                      color: "white",
-                      textAlign: "center",
-                    },
-                    duration: 3000,
-                  }}
-                />
+    <div className="min-h-screen relative overflow-hidden bg-[#21466D]">
+      {/* Toaster komponentini app/layout.tsx ga ko'chirish tavsiya etiladi */}
       <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-screen">
-        <div className="w-full flex items-center justify-center gap-12">
-          <div className="w-1/2 max-md:w-full">
-            <Card className="animate-scale-in ">
-              <CardHeader className="text-center pb-6">
-                {/* Mobile Logo */}
-
-                <CardTitle className="flex items-center justify-center gap-2 text-2xl text-gray-800 dark:text-gray-100">
-                  <LogIn className="h-6 w-6 text-[#21466D]" />
+        <div className="w-full flex items-center justify-center gap-8">
+          <motion.div
+            className="w-1/2 max-md:w-full lg:w-1/2" // Original width class
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="bg-white w-[600px] max-md:w-full rounded-xl shadow-2xl border border-gray-100">
+              <CardHeader className="text-center pb-6 pt-8 px-8">
+                <motion.div
+                  className="flex items-center justify-center gap-2 text-2xl text-[#21466D] mb-2"
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, duration: 0.4 }}
+                >
+                  <LogIn className="h-6 w-6 text-[#ffc82a]" />
                   {t("common.loginTitle")}
-                </CardTitle>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{t("common.loginDesc")}</p>
+                </motion.div>
+                <p className="text-sm text-gray-600 mt-2">{t("common.loginDesc")}</p>
               </CardHeader>
-
-              <CardContent className="space-y-6">
+              <CardContent className="px-8 pb-8 space-y-6">
                 <form onSubmit={handleLogin} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="passport" className="text-gray-700 dark:text-gray-300 font-medium">
+                  <motion.div
+                    className="space-y-2"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3, duration: 0.4 }}
+                  >
+                    <Label htmlFor="passport" className="block text-sm font-medium text-[#21466D]">
                       {t("common.passportId")}
                     </Label>
-                    <Input
-                      id="passport"
-                      value={passport}
-                      onChange={(e) => setPassport(e.target.value)}
-                      placeholder="AB1234569"
-                      className="h-12 border-[#21466D] dark:border-gray-600 focus:border-[#21466D] focus:ring-[#ffc82a]/20 bg-white/80 dark:bg-gray-700/80 dark:text-gray-100"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-gray-700 dark:text-gray-300 font-medium">
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#ffc82a] h-5 w-5" />
+                      <Input
+                        id="passport"
+                        value={passport}
+                        onChange={(e) => setPassport(e.target.value)}
+                        placeholder="AB1234569"
+                        className="w-full h-12 pl-10 pr-4 border-2 border-[#ffc82a] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ffc82a]/30 focus:border-[#ffc82a] bg-white text-[#21466D] placeholder-gray-400 transition-all duration-200"
+                      />
+                    </div>
+                  </motion.div>
+                  <motion.div
+                    className="space-y-2"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4, duration: 0.4 }}
+                  >
+                    <Label htmlFor="password" className="block text-sm font-medium text-[#21466D]">
                       {t("common.password")}
                     </Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder={t("common.enterPassword")}
-                      className="h-12 border-[#21466D] dark:border-gray-600 focus:border-[#21466D] focus:ring-[#21466D]/20 bg-white/80 dark:bg-gray-700/80 dark:text-gray-100"
-                    />
-                  </div>
-
-                  <Button
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#ffc82a] h-5 w-5" />
+                      <Input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder={t("common.enterPassword")}
+                        className="w-full h-12 pl-10 pr-4 border-2 border-[#ffc82a] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ffc82a]/30 focus:border-[#ffc82a] bg-white text-[#21466D] placeholder-gray-400 transition-all duration-200"
+                      />
+                    </div>
+                  </motion.div>
+                  <motion.button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-12 bg-[#21466D] hover:bg-[#212c3f] text-[white] font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                    className="w-full h-12 bg-[#ffc82a] hover:bg-[#ffb600] disabled:bg-gray-300 text-[#21466D] font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5, duration: 0.4 }}
                   >
-                    {loading ? <></> : <LogIn className="h-4 w-4 mr-2" />}
-                    {loading ? t("common.login") : t("common.login")}
-                  </Button>
+                    {loading ? (
+                      <div className="w-5 h-5 border-2 border-[#21466D] border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <LogIn className="h-4 w-4" />
+                    )}
+                    {loading ? t("common.loading") : t("common.login")}
+                  </motion.button>
                 </form>
-
-                <div className="relative">
+                <motion.div
+                  className="relative"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6, duration: 0.4 }}
+                >
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-[#21466D] dark:border-gray-600"></div>
+                    <div className="w-full border-t-2 border-[#ffc82a]"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                      {t("common.noAccount")}
-                    </span>
+                    <span className="px-4 bg-white text-gray-500">{t("common.noAccount")}</span>
                   </div>
-                </div>
-
-                <div className="text-center">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{t("common.registrationViaBot")}</p>
-                  <Button
-                    variant="outline"
-                    className="w-full border-[#21466D] text-[#21466D] hover:bg-[#21466D] hover:text-[white] dark:border-[#ffc82a] dark:text-[#ffc82a] dark:hover:bg-[#ffc82a] dark:hover:text-black transition-all duration-200 bg-transparent"
+                </motion.div>
+                <motion.div
+                  className="text-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7, duration: 0.4 }}
+                >
+                  <p className="text-sm text-gray-600 mb-3">{t("common.registrationViaBot")}</p>
+                  <motion.button
+                    className="w-full h-12 border-2 border-[#ffc82a] text-[#21466D] hover:bg-[#ffc82a] hover:text-[#21466D] transition-all duration-200 bg-white rounded-lg font-semibold"
                     onClick={() => window.open("https://t.me/usat_kutubxona_bot", "_blank")}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     {t("common.registerViaTelegram")}
-                  </Button>
-                </div>
+                  </motion.button>
+                </motion.div>
               </CardContent>
-            </Card>
-          </div>
-          <div className="hidden lg:flex flex-col items-center justify-center flex-1">
-            <div className="relative">
-              <div className="relative max-md:hidden w-[500%] h-[500%] ">
-                <Image src="/login.png" alt="USAT Logo" width={500} height={500} className=" object-contain" />
-              </div>
             </div>
-          </div>
+          </motion.div>
+          <motion.div
+            className="hidden xl:flex flex-col items-center justify-center"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+          >
+            <div className="relative">
+              <motion.div
+                className="relative w-[550px] h-[550px]"
+                animate={{ y: [0, -10, 0] }}
+                transition={{
+                  duration: 3,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "easeInOut",
+                }}
+              >
+                <Image
+                  src="/logo 6.png"
+                  alt="USAT Logo"
+                  width={550}
+                  height={550}
+                  className="w-full h-full object-contain"
+                />
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>
