@@ -15,6 +15,10 @@ export const metadata: Metadata = {
   description: "USAT Universiteti Kutubxonasi",
   generator: "abddev09@gmail.com",
   manifest: "/manifest.json",
+   icons: {
+    icon: "/dark-logo.png",
+    apple: "/dark-logo.png",
+  },
   themeColor: "#21466D",
   appleWebApp: {
     capable: true,
@@ -44,9 +48,7 @@ export default function RootLayout({
       </Head>
       <body>
         <I18nClientProvider>
-          {" "}
           <ScrollToTopButton/>
-          {/* Yangi Client Component bilan o'rash */}
             <Navbar />
           <main className="min-h-screen bg-background">{children}</main>
           <Toaster
