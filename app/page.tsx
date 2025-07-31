@@ -235,6 +235,9 @@ export default function HomePage() {
     <div className="min-h-screen bg-background mt-10">
       <BookSwiper /> {/* Pass the memoized value */}
       <div className="container mx-auto px-4 py-8">
+        <div className="w-full px-10 py-8 text-start">
+          {books && <h1 className="text-[38px] font-[700] text-[#21466D]">Barcha Kitoblar</h1>}
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 max-md:gap-4">
           {currentBooks.map((book, index) => {
             const imageUrl = book.image?.url ? getFullImageUrl(book.image.url) : "/placeholder.svg"
