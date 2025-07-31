@@ -153,14 +153,14 @@ export default function LoginPage() {
                   </div>
                 </motion.div>
                 <motion.div
-                  className="text-center"
+                  className="text-center w-full"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.7, duration: 0.4 }}
                 >
                   <p className="text-sm text-gray-600 mb-3">{t("common.registrationViaBot")}</p>
                   <motion.h1
-                    className="w-full text-center underline text-[#21466D] hover:text-[#ffc82a] transition-all duration-200 font-bold"
+                    className="text-center underline text-[#21466D] hover:text-[#ffc82a] transition-all duration-200 font-bold"
                     onClick={() => window.open("https://t.me/usat_kutubxona_bot", "_blank")}
                     
                   >
