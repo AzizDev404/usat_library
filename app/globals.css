@@ -116,7 +116,6 @@ body {
 
 .book-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .primary-gradient {
@@ -166,7 +165,6 @@ body {
   background: #ffc82a !important;
   border-radius: 6px !important;
   opacity: 1 !important;
-  box-shadow: 0 2px 8px rgba(255, 200, 42, 0.4) !important;
 }
 
 /* Mobile va Desktop uchun bir xil o'lcham */
@@ -194,7 +192,6 @@ body {
 }
 
 .custom-bullet-active:hover {
-  box-shadow: 0 4px 12px rgba(255, 200, 42, 0.6) !important;
 }
 
 

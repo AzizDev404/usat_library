@@ -159,14 +159,13 @@ export default function LoginPage() {
                   transition={{ delay: 0.7, duration: 0.4 }}
                 >
                   <p className="text-sm text-gray-600 mb-3">{t("common.registrationViaBot")}</p>
-                  <motion.button
-                    className="w-full h-12 border-2 border-[#ffc82a] text-[#21466D] hover:bg-[#ffc82a] hover:text-[#21466D] transition-all duration-200 bg-white rounded-lg font-semibold"
+                  <motion.h1
+                    className="w-full text-center underline text-[#21466D] hover:text-[#ffc82a] transition-all duration-200 font-bold"
                     onClick={() => window.open("https://t.me/usat_kutubxona_bot", "_blank")}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    
                   >
                     {t("common.registerViaTelegram")}
-                  </motion.button>
+                  </motion.h1>
                 </motion.div>
               </CardContent>
             </div>

@@ -13,7 +13,7 @@ import { toast } from "sonner"
 import { usePathname, useRouter } from "next/navigation"
 import { getAllBooks } from "@/lib/api"
 import { getFullImageUrl } from "@/lib/utils"
-import { useTranslation } from "react-i18next" // i18n import
+import { useTranslation } from "react-i18next"
 
 interface BookData {
   id: string
@@ -73,13 +73,15 @@ interface BookItem {
 interface EnrichedBook extends BookData {
   bookItem?: BookItem
 }
+
 export default function Navbar() {
-  const { t, i18n } = useTranslation() // useTranslation hook'ini ishlatish
+  const { t, i18n } = useTranslation()
   const { token } = useAuthStore()
   const [cartCount, setCartCount] = useState(0)
   const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
   const [isClient, setIsClient] = useState(false)
+  const router = useRouter()
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState("")
@@ -88,11 +90,13 @@ export default function Navbar() {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const [filteredBooks, setFilteredBooks] = useState<EnrichedBook[]>([])
   const [allboks, setbooks] = useState<EnrichedBook[]>([])
+
   // UI states
   const [showSearch, setShowSearch] = useState(false)
   const [showDropdown, setShowDropdown] = useState<string | null>(null)
   const [showBooksPanel, setShowBooksPanel] = useState(false)
   const [showMobileSearch, setShowMobileSearch] = useState(false)
+
   useEffect(() => {
     const allbooks = async () => {
       const books = (await getAllBooks()) as any
@@ -102,14 +106,13 @@ export default function Navbar() {
     }
     allbooks()
   }, [])
+
   // Filter books based on selected criteria
   useEffect(() => {
     const filtered = allboks.filter((book) => {
       const matchesSearch = book.name.toLowerCase().includes(searchTerm.toLowerCase())
-
       return matchesSearch
     })
-
     setFilteredBooks(filtered)
 
     // Show books panel if there are any filters applied
@@ -119,7 +122,7 @@ export default function Navbar() {
       selectedDepartments.length > 0 ||
       selectedTopics.length > 0
     setShowBooksPanel(hasFilters)
-  }, [searchTerm, selectedDirections, selectedDepartments, selectedTopics])
+  }, [searchTerm, selectedDirections, selectedDepartments, selectedTopics, allboks])
 
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -153,26 +156,24 @@ export default function Navbar() {
   }, [showBooksPanel])
 
   useEffect(() => {
-  setIsClient(true)
-  setMounted(true)
+    setIsClient(true)
+    setMounted(true)
+    const userId = localStorage.getItem("id")
+    if (!userId) return
 
-  const userId = localStorage.getItem("id")
-  if (!userId) return
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]")
+    const userCart = cart.filter((item: any) => item.userId === userId)
+    setCartCount(userCart.length)
 
-  const cart = JSON.parse(localStorage.getItem("cart") || "[]")
-  const userCart = cart.filter((item: any) => item.userId === userId)
-  setCartCount(userCart.length)
+    const handleStorageChange = () => {
+      const updatedCart = JSON.parse(localStorage.getItem("cart") || "[]")
+      const updatedUserCart = updatedCart.filter((item: any) => item.userId === userId)
+      setCartCount(updatedUserCart.length)
+    }
 
-  const handleStorageChange = () => {
-    const updatedCart = JSON.parse(localStorage.getItem("cart") || "[]")
-    const updatedUserCart = updatedCart.filter((item: any) => item.userId === userId)
-    setCartCount(updatedUserCart.length)
-  }
-
-  window.addEventListener("storage", handleStorageChange)
-  return () => window.removeEventListener("storage", handleStorageChange)
-}, [])
-
+    window.addEventListener("storage", handleStorageChange)
+    return () => window.removeEventListener("storage", handleStorageChange)
+  }, [])
 
   const clearAllFilters = () => {
     setSearchTerm("")
@@ -191,13 +192,14 @@ export default function Navbar() {
       clearAllFilters()
     }
   }
-    const [notification, setNotification] = useState<string | null>(null)
-  const router = useRouter()
-  
+
+  const [notification, setNotification] = useState<string | null>(null)
+
   const showNotification = (message: string) => {
     setNotification(message)
     setTimeout(() => setNotification(null), 3000)
   }
+
   const handleLogout = () => {
     localStorage.removeItem("token")
     localStorage.removeItem("id")
@@ -205,33 +207,38 @@ export default function Navbar() {
     showNotification(t("common.loggedOut"))
     router.push("/login")
   }
-const confirmLogout = () => {
-  toast.custom((t_toast) => (
-    <div className=" dark:bg-zinc-900  rounded-xl w-fit animate-in fade-in zoom-in flex flex-col gap-4">
-      <div className="text-lg font-semibold text-[white] dark:text-white">
-        {t("common.confirmLogout")}
+
+  const confirmLogout = () => {
+    toast.custom((t_toast) => (
+      <div className="dark:bg-zinc-900 rounded-xl w-fit animate-in fade-in zoom-in flex flex-col gap-4">
+        <div className="text-lg font-semibold text-[white] dark:text-white">{t("common.confirmLogout")}</div>
+        <p className="text-sm text-[white]">{t("common.logoutMessage")}</p>
+        <div className="flex justify-center gap-3 pt-2">
+          <button
+            onClick={() => toast.dismiss(t_toast)}
+            className="px-4 py-2 rounded-lg border border-[white]/40 hover:bg-[#21466D]/10 text-[white] text-sm font-medium transition-all duration-200"
+          >
+            {t("common.cancel")}
+          </button>
+          <button
+            onClick={() => {
+              handleLogout()
+              toast.dismiss(t_toast)
+            }}
+            className="px-4 py-2 rounded-lg bg-[white] text-[#1c3b5c] text-sm font-medium transition-all duration-200"
+          >
+            {t("common.yesLogout")}
+          </button>
+        </div>
       </div>
-      <p className="text-sm text-[white]">{t("common.logoutMessage")}</p>
-      <div className="flex justify-center gap-3 pt-2">
-        <button
-          onClick={() => toast.dismiss(t_toast)}
-          className="px-4 py-2 rounded-lg border border-[white]/40 hover:bg-[#21466D]/10 text-[white] text-sm font-medium transition-all duration-200"
-        >
-          {t("common.cancel")}
-        </button>
-        <button
-          onClick={() => {
-            handleLogout()
-            toast.dismiss(t_toast)
-          }}
-          className="px-4 py-2 rounded-lg bg-[white] text-[#1c3b5c] text-sm font-medium transition-all duration-200"
-        >
-          {t("common.yesLogout")}
-        </button>
-      </div>
-    </div>
-  ))
-}
+    ))
+  }
+
+  // Handle book click with proper navigation
+  const handleBookClick = (bookId: string) => {
+    clearAllFilters()
+    router.push(`/book/${bookId}`)
+  }
 
   if (pathname === "/login/") return <></>
   if (!mounted) return null
@@ -270,10 +277,9 @@ const confirmLogout = () => {
 
             {showBooksPanel && (
               <>
-                <div
-                  className="fixed top-[108px] left-0 right-0 bottom-0 z-20 backdrop-brightness-50"
-                  onClick={() => clearAllFilters()} // tashqariga bosganda yopish
-                />
+                {/* Backdrop - removed onClick handler to prevent interference */}
+                <div className="fixed top-[108px] left-0 right-0 bottom-0 z-20 backdrop-brightness-50" />
+
                 <div
                   ref={panelRef}
                   className="absolute top-[75px] w-[92.4%] max-h-[400px] z-30 bg-white border shadow-lg overflow-y-auto rounded-md"
@@ -288,11 +294,10 @@ const confirmLogout = () => {
                       </span>
                     </h3>
                     {filteredBooks.map((book) => (
-                      <Link
-                        href={`/book/${book.id}`}
-                        onClick={() => clearAllFilters()}
+                      <div
                         key={book.id}
-                        className="border-b border-gray-200 py-3 flex items-start gap-4 hover:bg-gray-50 transition"
+                        onClick={() => handleBookClick(book.id)}
+                        className="border-b border-gray-200 py-3 flex items-start gap-4 hover:bg-gray-50 transition cursor-pointer"
                       >
                         <Image
                           src={book.image?.url ? getFullImageUrl(book.image.url) : "/placeholder.svg"}
@@ -305,7 +310,7 @@ const confirmLogout = () => {
                           <h4 className="text-base font-semibold text-[#21466D] line-clamp-1">{book.name}</h4>
                           <p className="text-sm text-[#21466D]/70 line-clamp-2">{book.description}</p>
                         </div>
-                      </Link>
+                      </div>
                     ))}
                     {filteredBooks.length === 0 && (
                       <div className="text-center text-[#21466D]/60 text-sm">{t("common.noResultsFound")}</div>
@@ -412,25 +417,23 @@ const confirmLogout = () => {
                     {t("common.results")} ({filteredBooks.length})
                   </h3>
                   {filteredBooks.map((book) => (
-                   <Link
-  href={`/book/${book.id}`}
-  key={book.id}
-  onClick={toggleMobileSearch}
-  className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-md transition"
->
-  <Image
-    src={book.image?.url ? getFullImageUrl(book.image.url) : "/placeholder.svg"}
-    alt={book.name}
-    width={40}
-    height={60}
-    className="rounded-md object-cover flex-shrink-0"
-  />
-  <div className="flex-1 min-w-0">
-    <h4 className="text-sm font-semibold text-[#21466D] line-clamp-1">{book.name}</h4>
-    <p className="text-xs text-[#21466D]/70 line-clamp-2">{book.description}</p>
-  </div>
-</Link>
-
+                    <div
+                      key={book.id}
+                      onClick={() => handleBookClick(book.id)}
+                      className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-md transition cursor-pointer"
+                    >
+                      <Image
+                        src={book.image?.url ? getFullImageUrl(book.image.url) : "/placeholder.svg"}
+                        alt={book.name}
+                        width={40}
+                        height={60}
+                        className="rounded-md object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-semibold text-[#21466D] line-clamp-1">{book.name}</h4>
+                        <p className="text-xs text-[#21466D]/70 line-clamp-2">{book.description}</p>
+                      </div>
+                    </div>
                   ))}
                   {filteredBooks.length === 0 && (
                     <div className="text-center text-[#21466D]/60 text-sm py-4">{t("common.noResultsFound")}</div>
@@ -454,7 +457,6 @@ const confirmLogout = () => {
             <span className="text-xs font-semibold">{t("common.books")}</span>
           </Button>
         </Link>
-
         <Link href="/filter" className="flex-1 px-1">
           <Button
             variant="ghost"
@@ -465,7 +467,6 @@ const confirmLogout = () => {
             <span className="text-xs font-semibold">{t("common.catalog")}</span>
           </Button>
         </Link>
-
         <Link href="/cart" className="flex-1 px-1 relative">
           <Button
             variant="ghost"
@@ -481,7 +482,6 @@ const confirmLogout = () => {
             </Badge>
           )}
         </Link>
-
         {token ? (
           <>
             <Link href="/profile" className="flex-1 px-1">
@@ -499,7 +499,8 @@ const confirmLogout = () => {
                 variant="ghost"
                 size="icon"
                 className="flex flex-col w-full items-center justify-center text-xs text-red-500 hover:bg-red-50 transition"
-                onClick={() => confirmLogout()}>
+                onClick={() => confirmLogout()}
+              >
                 <LogOut className="h-5 w-5" />
                 <span>{t("common.logout")}</span>
               </Button>

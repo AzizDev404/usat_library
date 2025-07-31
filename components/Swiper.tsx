@@ -128,7 +128,7 @@ export default function Swipper({ initialBooks }: SwipperProps) {
               <SwiperSlide key={`mobile-${book.Book.id}-${index}`}>
                 <div
                   onClick={() => isTokenyes(() => handleCardClick(book.Book.id))}
-                  className="bg-white rounded-3xl overflow-hidden border border-slate-200/50 transform transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] cursor-pointer group"
+                  className="bg-white rounded-3xl overflow-hidden border border-slate-200/50 transform transition-all duration-300  hover:scale-[1.02] cursor-pointer group"
                 >
                   <div className="relative overflow-hidden">
                     <Image
@@ -220,7 +220,7 @@ export default function Swipper({ initialBooks }: SwipperProps) {
         </div>
       ) : (
         <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-white via-[#21466d]/5 to-[#21466d]/5"></div>
+          <div className="absolute inset-0 "></div>
           <div className="relative py-16">
             <div className=" mx-auto container">
               <Swiper
@@ -249,8 +249,8 @@ export default function Swipper({ initialBooks }: SwipperProps) {
               >
                 {filteredBooks.map((book, index) => (
                   <SwiperSlide key={`desktop-${book.Book.id}-${index}`}>
-                    <div className="flex items-center justify-center min-h-[700px] px-8">
-                      <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20 w-full  transform transition-all duration-500 hover:shadow-3xl group">
+                    <div className="flex items-center justify-center min-h-[700px] px-8 py-10">
+                      <div className="bg-white/80 shadow-xl rounded-3xl border border-white/20 w-full  transform transition-all duration-500  group">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8 lg:p-12 items-center">
                           {/* Image Section - 50% */}
                           <div className="relative group/image flex justify-center">
@@ -339,13 +339,13 @@ export default function Swipper({ initialBooks }: SwipperProps) {
                             {/* Action Button - 10% */}
                             <div className="pt-4">
                               <button
-                                className="w-full bg-[#21466d] hover:bg-[#1a385a] text-white h-14 font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] inline-flex items-center justify-center group/btn"
+                                className="w-full bg-[#21466d] hover:bg-[#1a385a] text-white h-14 font-bold text-lg rounded-2xl transition-all duration-300 transform inline-flex items-center justify-center"
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   isTokenyes(() => handleCardClick(book.Book.id))
                                 }}
                               >
-                                <Info className="h-6 w-6 mr-3 group-hover/btn:rotate-12 transition-transform duration-300" />
+                                <Info className="h-6 w-6 mr-3  transition-transform duration-300" />
                                 {t("common.moreDetails")}
                               </button>
                             </div>
@@ -384,7 +384,6 @@ export default function Swipper({ initialBooks }: SwipperProps) {
         .desktop-book-swiper .swiper-slide-active > div {
           opacity: 1;
           transform: scale(1) translateY(0);
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* shadow-2xl */
         }
         .desktop-book-swiper .swiper-slide-next > div,
         .desktop-book-swiper .swiper-slide-prev > div {

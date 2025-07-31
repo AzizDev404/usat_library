@@ -172,7 +172,7 @@ export default function HomePage() {
 
   // Kitoblar ro'yxatini 10 marta takrorlash (paginationni sinash uchun)
   const repeatedBooks = useMemo(() => {
-    return Array.from({ length: 10 }).flatMap(() => books)
+    return Array.from({ length: 1 }).flatMap(() => books)
   }, [books])
 
   const totalPages = Math.ceil(repeatedBooks.length / itemsPerPage)
@@ -234,7 +234,6 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background mt-10">
       <BookSwiper /> {/* Pass the memoized value */}
-      <ScrollToTopButton />
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 max-md:gap-4">
           {currentBooks.map((book, index) => {
