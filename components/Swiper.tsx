@@ -221,7 +221,7 @@ export default function Swipper({ initialBooks }: SwipperProps) {
       ) : (
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 "></div>
-          <div className="relative py-16">
+          <div className="relative -mt-10">
             <div className=" mx-auto container">
               <Swiper
                 slidesPerView={1}
