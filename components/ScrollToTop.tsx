@@ -46,6 +46,7 @@ export default function ScrollToTopButton() {
   }
 
   return (
+    
     <AnimatePresence>
       {isVisible && (
         <motion.div

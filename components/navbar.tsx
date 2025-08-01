@@ -14,6 +14,8 @@ import { usePathname, useRouter } from "next/navigation"
 import { getAllBooks } from "@/lib/api"
 import { getFullImageUrl } from "@/lib/utils"
 import { useTranslation } from "react-i18next"
+import Magnet from "@/components/Magnet" // Import Magnet component
+import MagnetButton from "@/components/Magnet"
 
 interface BookData {
   id: string
@@ -158,6 +160,7 @@ export default function Navbar() {
   useEffect(() => {
     setIsClient(true)
     setMounted(true)
+
     const userId = localStorage.getItem("id")
     if (!userId) return
 
@@ -279,7 +282,6 @@ export default function Navbar() {
               <>
                 {/* Backdrop - removed onClick handler to prevent interference */}
                 <div className="fixed top-[108px] left-0 right-0 bottom-0 z-20 backdrop-brightness-50" />
-
                 <div
                   ref={panelRef}
                   className="absolute top-[75px] w-[92.4%] max-h-[400px] z-30 bg-white border shadow-lg overflow-y-auto rounded-md"
@@ -323,20 +325,24 @@ export default function Navbar() {
 
           {/* Mobile Search Icon */}
           <div className="md:hidden">
-            <Button onClick={toggleMobileSearch} className="text-[#21466D]">
-              <Search className="w-16" />
-            </Button>
+            <MagnetButton >
+              <Button onClick={toggleMobileSearch} className="text-[#21466D]">
+                <Search className="w-16" />
+              </Button>
+            </MagnetButton>
           </div>
 
           {/* Desktop Katalog Button - Hidden on mobile */}
           <Link href="/filter" className="mr-5 hidden md:block">
-            <Button
-              className="px-8 py-6 text-white hover:!bg-white hover:text-[#21466D]"
-              style={{ border: "1px solid ", backgroundColor: "#21466D" }}
-            >
-              <Layers />
-              {t("common.catalog")}
-            </Button>
+            <MagnetButton >
+              <Button
+                className="px-8 py-6 text-white hover:!bg-white hover:text-[#21466D]"
+                style={{ border: "1px solid ", backgroundColor: "#21466D" }}
+              >
+                <Layers />
+                {t("common.catalog")}
+              </Button>
+            </MagnetButton>
           </Link>
 
           {/* Right side buttons */}
@@ -344,42 +350,48 @@ export default function Navbar() {
             {token ? (
               <>
                 <Link href="/cart">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="relative !bg-[#21466D] hover:!bg-[white] hover:text-[#21466D] px-8 py-6 animate-scale-in text-white bg-transparent"
-                    style={{ border: "1px solid #21466D", backgroundColor: "transparent" }}
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    {t("common.cart")}
-                    {cartCount > 0 && (
-                      <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex justify-center items-center primary-gradient">
-                        {cartCount}
-                      </Badge>
-                    )}
-                  </Button>
+                  <MagnetButton >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="relative !bg-[#21466D] hover:!bg-[white] hover:text-[#21466D] px-8 py-6 animate-scale-in text-white bg-transparent"
+                      style={{ border: "1px solid #21466D", backgroundColor: "transparent" }}
+                    >
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      {t("common.cart")}
+                      {cartCount > 0 && (
+                        <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex justify-center items-center primary-gradient">
+                          {cartCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  </MagnetButton>
                 </Link>
                 <Link href="/profile">
-                  <Button
-                    variant="outline"
-                    style={{ border: "1px solid #21466D", backgroundColor: "transparent" }}
-                    className="rounded-full flex w-[50px] h-[50px] text-[30px] hover:text-[white] flex-col justify-center items-center hover:!bg-[#21466D] hover:border-transparent transition-all duration-300 bg-transparent"
-                  >
-                    <User className="w-20" />
-                  </Button>
+                  <MagnetButton >
+                    <Button
+                      variant="outline"
+                      style={{ border: "1px solid #21466D", backgroundColor: "transparent" }}
+                      className="rounded-full flex w-[50px] h-[50px] text-[30px] hover:text-[white] flex-col justify-center items-center hover:!bg-[#21466D] hover:border-transparent transition-all duration-300 bg-transparent"
+                    >
+                      <User className="w-20" />
+                    </Button>
+                  </MagnetButton>
                 </Link>
               </>
             ) : (
               <Link href="/login">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="relative !bg-[#21466D] hover:!bg-[white] hover:text-[#21466D] px-8 py-6 animate-scale-in text-white bg-transparent"
-                  style={{ border: "1px solid #21466D", backgroundColor: "transparent" }}
-                >
-                  <LogIn className="h-4 w-4 mr-2" />
-                  {t("common.login")}
-                </Button>
+                <MagnetButton>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="relative !bg-[#21466D] hover:!bg-[white] hover:text-[#21466D] px-8 py-6 animate-scale-in text-white bg-transparent"
+                    style={{ border: "1px solid #21466D", backgroundColor: "transparent" }}
+                  >
+                    <LogIn className="h-4 w-4 mr-2" />
+                    {t("common.login")}
+                  </Button>
+                </MagnetButton>
               </Link>
             )}
           </div>
@@ -448,74 +460,89 @@ export default function Navbar() {
       {/* Mobile Navigation */}
       <div className="fixed bottom-0 z-50 w-full bg-background border-t md:hidden flex items-center h-16 px-2">
         <Link href="/" className="flex-1 px-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
-          >
-            <BookAIcon />
-            <span className="text-xs font-semibold">{t("common.books")}</span>
-          </Button>
-        </Link>
-        <Link href="/filter" className="flex-1 px-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
-          >
-            <Layers className="h-5 w-5" />
-            <span className="text-xs font-semibold">{t("common.catalog")}</span>
-          </Button>
-        </Link>
-        <Link href="/cart" className="flex-1 px-1 relative">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
-          >
-            <ShoppingCart className="h-5 w-5" />
-            <span>{t("common.cart")}</span>
-          </Button>
-          {cartCount > 0 && (
-            <Badge className="absolute top-1 right-2 h-5 w-5 p-0 text-xs flex justify-center items-center primary-gradient">
-              {cartCount}
-            </Badge>
-          )}
-        </Link>
-        {token ? (
-          <>
-            <Link href="/profile" className="flex-1 px-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
-              >
-                <User className="h-5 w-5" />
-                <span>{t("common.profile")}</span>
-              </Button>
-            </Link>
-            <div className="flex-1 px-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="flex flex-col w-full items-center justify-center text-xs text-red-500 hover:bg-red-50 transition"
-                onClick={() => confirmLogout()}
-              >
-                <LogOut className="h-5 w-5" />
-                <span>{t("common.logout")}</span>
-              </Button>
-            </div>
-          </>
-        ) : (
-          <Link href="/login" className="flex-1 px-1">
+          <MagnetButton >
             <Button
               variant="ghost"
               size="icon"
               className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
             >
-              <LogIn className="h-5 w-5" />
-              <span>{t("common.login")}</span>
+              <BookAIcon />
+              <span className="text-xs font-semibold">{t("common.books")}</span>
             </Button>
+          </MagnetButton>
+        </Link>
+
+        <Link href="/filter" className="flex-1 px-1">
+          <MagnetButton >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
+            >
+              <Layers className="h-5 w-5" />
+              <span className="text-xs font-semibold">{t("common.catalog")}</span>
+            </Button>
+          </MagnetButton>
+        </Link>
+
+        <Link href="/cart" className="flex-1 px-1 relative">
+          <MagnetButton >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              <span>{t("common.cart")}</span>
+            </Button>
+            {cartCount > 0 && (
+              <Badge className="absolute top-1 right-2 h-5 w-5 p-0 text-xs flex justify-center items-center primary-gradient">
+                {cartCount}
+              </Badge>
+            )}
+          </MagnetButton>
+        </Link>
+
+        {token ? (
+          <>
+            <Link href="/profile" className="flex-1 px-1">
+              <MagnetButton >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
+                >
+                  <User className="h-5 w-5" />
+                  <span>{t("common.profile")}</span>
+                </Button>
+              </MagnetButton>
+            </Link>
+            <div className="flex-1 px-1">
+              <MagnetButton >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="flex flex-col w-full items-center justify-center text-xs text-red-500 hover:bg-red-50 transition"
+                  onClick={() => confirmLogout()}
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>{t("common.logout")}</span>
+                </Button>
+              </MagnetButton>
+            </div>
+          </>
+        ) : (
+          <Link href="/login" className="flex-1 px-1">
+            <MagnetButton >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
+              >
+                <LogIn className="h-5 w-5" />
+                <span>{t("common.login")}</span>
+              </Button>
+            </MagnetButton>
           </Link>
         )}
       </div>

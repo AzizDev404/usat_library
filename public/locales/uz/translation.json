@@ -1,5 +1,7 @@
 {
   "common": {
+    "usat":"USAT kutubxonasiga xush kelibsiz",
+    "usat2":"Kutubxona tizimiga kirilmoqda...",
     "loading":"Yuklanmoqda",
     "elementCount":"Buyurtmalar soni: {{count}}",
     "countUnit": "dona",

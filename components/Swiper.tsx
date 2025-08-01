@@ -21,6 +21,7 @@ import "swiper/css"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import MagnetButton from "./Magnet"
 
 interface SwipperProps {
   initialBooks?: BookData[]
@@ -211,7 +212,8 @@ export default function Swipper({ initialBooks }: SwipperProps) {
                   </div>
                 </CardContent>
                 <CardFooter className="p-4 pt-0 flex flex-col gap-2 max-md:gap-1 max-md:p-2">
-                  <Button
+                  <MagnetButton className="w-full">
+                    <Button
                     className="w-full !bg-[#21466D] text-[white] hover:!bg-[white] border-2 font-bold border-transparent hover:!border-[#21466D] hover:!text-[#21466D] flex items-center justify-center gap-2 bg-transparent"
                     onClick={(e) => {
                       e.stopPropagation()
@@ -220,6 +222,7 @@ export default function Swipper({ initialBooks }: SwipperProps) {
                   >
                     <Info className="h-4 w-4 mr-2" /> {t("common.details")}
                   </Button>
+                  </MagnetButton>
                 </CardFooter>
               </Card>
 

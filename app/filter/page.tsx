@@ -14,6 +14,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink } from "@
 import { getBookItems, getCategories, getKafedras } from "@/lib/api" // Removed getAllBooks
 import { getFullImageUrl, isBookNew } from "@/lib/utils"
 import { useTranslation } from "react-i18next"
+import MagnetButton from "@/components/Magnet"
 
 interface Category {
   id: string
@@ -348,9 +349,11 @@ const FilterPage = () => {
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b bg-white">
               <h3 className="text-lg font-semibold">{t("common.filter")}</h3>
-              <Button variant="ghost" size="icon" onClick={() => setShowMobileFilter(false)} className="h-8 w-8">
+              <MagnetButton>
+                <Button variant="ghost" size="icon" onClick={() => setShowMobileFilter(false)} className="h-8 w-8">
                 <X className="h-4 w-4" />
               </Button>
+              </MagnetButton>
             </div>
 
             {/* Filter Content */}
@@ -362,7 +365,8 @@ const FilterPage = () => {
                     <span className="text-sm font-medium text-[#21466D]">
                       {t("common.activeFilters")} ({getActiveFiltersCount()})
                     </span>
-                    <Button
+                    <MagnetButton className="w-full">
+                      <Button
                       variant="ghost"
                       size="sm"
                       onClick={clearAllFilters}
@@ -370,6 +374,7 @@ const FilterPage = () => {
                     >
                       {t("common.clearAll")}
                     </Button>
+                    </MagnetButton>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {selectedCategories.map((catId) => {
@@ -444,12 +449,14 @@ const FilterPage = () => {
               <div className="text-sm text-center text-muted-foreground">
                 {filteredBooks.length} {t("common.totalBooksFound", { count: filteredBooks.length })}
               </div>
-              <Button
+              <MagnetButton className="w-full">
+                <Button
                 onClick={() => setShowMobileFilter(false)}
                 className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white"
               >
                 {t("common.viewResults")}
               </Button>
+              </MagnetButton>
             </div>
           </div>
         </div>
@@ -493,9 +500,11 @@ const FilterPage = () => {
 
         {/* Clear Filters */}
         {(selectedCategories.length > 0 || selectedKafedras.length > 0) && (
-          <Button variant="outline" onClick={clearAllFilters} className="w-full bg-transparent">
+          <MagnetButton className="w-2/3">
+            <Button variant="outline" onClick={clearAllFilters} className="w-full bg-transparent">
             {t("common.clearAll")}
           </Button>
+          </MagnetButton>
         )}
       </div>
 
@@ -582,13 +591,15 @@ const FilterPage = () => {
                   </CardContent>
 
                   <CardFooter className="p-4 pt-0 flex flex-col gap-2">
-                    <Button
+                    <MagnetButton className="w-full">
+                      <Button
                       className="w-full bg-[#21466D] hover:bg-[#21466D]/90 text-white"
                       onClick={(e) => isTokenyes(() => addToCart(book))}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
                       {t("common.addBookToCart")}
                     </Button>
+                    </MagnetButton>
                   </CardFooter>
                 </Card>
               )

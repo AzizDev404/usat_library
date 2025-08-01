@@ -11,6 +11,7 @@ import { postUserOrder, getUserOrders } from "@/lib/api"
 import { getFullImageUrl } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { useTranslation } from "react-i18next"
+import MagnetButton from "@/components/Magnet"
 
 // Define the EnrichedBook interface to match the new data structure
 interface EnrichedBook {
@@ -212,7 +213,9 @@ export default function CartPage() {
           <h1 className="text-3xl font-bold mb-2 text-[#21466D]">{t("common.cartEmpty")}</h1>
           <p className="text-muted-foreground mb-8">{t("common.noBooksInCart")}</p>
           <Link href="/">
-            <Button className="bg-[#21466D] text-white hover:bg-[#21466D]/90">{t("common.viewBooks")}</Button>
+            <MagnetButton>
+              <Button className="bg-[#21466D] text-white hover:bg-[#21466D]/90">{t("common.viewBooks")}</Button>
+            </MagnetButton>
           </Link>
         </div>
       </div>
@@ -235,9 +238,11 @@ export default function CartPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="destructive" onClick={clearCart}>
+          <MagnetButton>
+            <Button variant="destructive" onClick={clearCart}>
             {t("common.clearCart")}
           </Button>
+          </MagnetButton>
         </div>
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
@@ -336,7 +341,8 @@ export default function CartPage() {
                 </span>
               </div>
               <div className="border-t pt-4">
-                <Button
+                <MagnetButton className="w-full">
+                  <Button
                   onClick={placeOrder}
                   disabled={isLoadingOrder || selectedItems.length === 0}
                   className="px-8 py-6 w-full text-white hover:!bg-white hover:text-[#21466D]"
@@ -347,6 +353,7 @@ export default function CartPage() {
                 >
                   {isLoadingOrder ? t("common.placingOrder") : t("common.placeOrder")}
                 </Button>
+                </MagnetButton>
               </div>
             </CardContent>
           </Card>
