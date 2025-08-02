@@ -1,5 +1,7 @@
 {
   "common": {
+    "newBooks":"Yangi kitoblar",
+    "allBooks":"Barcha kitoblar",
     "usat":"USAT kutubxonasiga xush kelibsiz",
     "usat2":"Kutubxona tizimiga kirilmoqda...",
     "loading":"Yuklanmoqda",
