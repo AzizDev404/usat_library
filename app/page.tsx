@@ -452,7 +452,7 @@ export default function HomePage() {
                     <CardContent className="p-4 flex-grow flex flex-col max-md:p-2">
                       <div className="relative mb-4 overflow-hidden rounded-lg">
                         <Image
-                          src="/library.jpg"
+                          src={imageUrl}
                           alt={book.name}
                           width={150}
                           height={250}
