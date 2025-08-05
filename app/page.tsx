@@ -9,7 +9,7 @@ import { ShoppingCart, ArrowLeft, ArrowRight } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { getBookItems, getBooks } from "@/lib/api" // getBooks ni ham import qildik
+import { getBookItems, getBooks } from "@/lib/api"
 import { getFullImageUrl, isBookNew } from "@/lib/utils"
 import BookSwiper from "@/components/Swiper"
 import { useTranslation } from "react-i18next"
@@ -17,7 +17,8 @@ import ScrollToTopButton from "@/components/ScrollToTop"
 import MagnetButton from "@/components/Magnet"
 import TextType from "@/components/TextType"
 import { t } from "i18next"
-import type { BookData } from "@/types/index" // BookData ni import qildik
+import type { BookData } from "@/types/index"
+import NetworkError from "@/components/network-error"
 
 // Define the EnrichedBook interface to match the new data structure
 interface EnrichedBook {
@@ -88,6 +89,7 @@ interface EnrichedBook {
 
 // Global cache for main book data
 let cachedBooks: EnrichedBook[] | null = null
+
 // Global cache for swiper book data
 let cachedSwiperBooks: BookData[] | null = null
 
@@ -114,85 +116,92 @@ const BookCardSkeleton = () => (
 
 // Welcome Loading Screen Component
 const WelcomeLoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
-  useEffect(() => {
+   useEffect(() => {
+    // Disable scroll
+    const originalOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
     const timer = setTimeout(() => {
       onComplete()
-    }, 5000) // 5 seconds
+    }, 5000)
 
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      document.body.style.overflow = originalOverflow // Re-enable scroll
+    }
   }, [onComplete])
 
   return (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-[#21466D] via-[#2a5a8a] to-[#1a3a5c] overflow-hidden">
-    
-    {/* Fixed Image that never moves */}
-    <div className="absolute top-[37%] left-1/2 -translate-x-1/2 z-50">
-      <div className="w-48 h-48 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-        <img
-          src="/logo 6.png"
-          alt="logo"
-          className="pointer-events-none select-none"
-          style={{ transform: "translateZ(0)", willChange: "transform" }}
-        />
-      </div>
-    </div>
-
-    {/* Animated Text Content */}
-    <div className="text-center space-y-8 pt-72">
-      <div className="space-y-4">
-        <TextType
-          text={t("common.usat")}
-          className="text-4xl md:text-6xl font-bold text-white text-center"
-          typingSpeed={80}
-          pauseDuration={1000}
-          deletingSpeed={50}
-          loop={true}
-          showCursor={true}
-          cursorCharacter="|"
-          cursorClassName="text-white animate-pulse"
-          textColors={["#ffffff", "#ffc82a", "#87ceeb"]}
-          variableSpeed={{ min: 60, max: 120 }}
-        />
-
-        <div className="mt-8">
-          <TextType
-            text={t("common.usat2")}
-            className="text-lg md:text-xl text-white/80 text-center"
-            typingSpeed={60}
-            initialDelay={2000}
-            showCursor={false}
-            loop={false}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-[#21466D] via-[#2a5a8a] to-[#1a3a5c] overflow-hidden">
+      {/* Fixed Image that never moves */}
+      <div className="absolute top-[37%] left-1/2 -translate-x-1/2 z-50">
+        <div className="w-48 h-48 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+          <img
+            src="/logo 6.png"
+            alt="logo"
+            className="pointer-events-none select-none"
+            style={{ transform: "translateZ(0)", willChange: "transform" }}
           />
         </div>
       </div>
+
+      {/* Animated Text Content */}
+      <div className="text-center space-y-8 pt-72">
+        <div className="space-y-4">
+          <TextType
+            text={t("common.usat")}
+            className="text-4xl md:text-6xl font-bold text-white text-center"
+            typingSpeed={80}
+            pauseDuration={1000}
+            deletingSpeed={50}
+            loop={true}
+            showCursor={true}
+            cursorCharacter="|"
+            cursorClassName="text-white animate-pulse"
+            textColors={["#ffffff", "#ffc82a", "#87ceeb"]}
+            variableSpeed={{ min: 60, max: 120 }}
+          />
+          <div className="mt-8">
+            <TextType
+              text={t("common.usat2")}
+              className="text-lg md:text-xl text-white/80 text-center"
+              typingSpeed={60}
+              initialDelay={2000}
+              showCursor={false}
+              loop={false}
+            />
+          </div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes progressBar {
+          from {
+            width: 0%;
+          }
+          to {
+            width: 100%;
+          }
+        }
+      `}</style>
     </div>
-
-    <style jsx>{`
-      @keyframes progressBar {
-        from {
-          width: 0%;
-        }
-        to {
-          width: 100%;
-        }
-      }
-    `}</style>
-  </div>
-);
-
+  )
 }
 
 export default function HomePage() {
   const { t, i18n } = useTranslation()
   const router = useRouter()
   const [books, setBooks] = useState<EnrichedBook[]>([])
-  const [swiperBooks, setSwiperBooks] = useState<BookData[]>([]) // Swiper uchun alohida state
+  const [swiperBooks, setSwiperBooks] = useState<BookData[]>([])
   const [visibleBooks, setVisibleBooks] = useState(20)
   const [isClient, setIsClient] = useState(false)
   const [showScrollButton, setShowScrollButton] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [isLoading, setIsLoading] = useState(true) // Loading state for main book cards
-  const [showWelcomeScreen, setShowWelcomeScreen] = useState(false) // Welcome screen state
+  const [isLoading, setIsLoading] = useState(true)
+  const [showWelcomeScreen, setShowWelcomeScreen] = useState(false)
+  const [showNetworkError, setShowNetworkError] = useState(false)
+  const [networkError, setNetworkError] = useState(false)
+
   const itemsPerPage = 4
 
   // Effect to determine if welcome screen should show (once per browser session)
@@ -205,64 +214,91 @@ export default function HomePage() {
     }
   }, [])
 
-  // Effect to fetch books (runs independently of welcome screen, and caches data)
-  useEffect(() => {
-    const fetchAllData = async () => {
-      // Fetch main books
-      if (cachedBooks) {
-        setBooks(cachedBooks)
+  // Function to check network connectivity
+  const checkNetworkAndFetch = async () => {
+    try {
+      setNetworkError(false)
+      setShowNetworkError(false)
+      await fetchAllData()
+    } catch (error: any) {
+      console.error("Network error:", error)
+
+      // Check if it's a network error
+      if (
+        error.code === "NETWORK_ERROR" ||
+        error.message?.includes("Network Error") ||
+        error.message?.includes("fetch") ||
+        !navigator.onLine
+      ) {
+        setNetworkError(true)
+        setShowNetworkError(true)
         setIsLoading(false)
       } else {
-        setIsLoading(true)
-        try {
-          const response = (await getBookItems()) as any
-          const bookItemsData = response.data || []
-          const enrichedBooks: EnrichedBook[] = bookItemsData.map((item: any) => ({
-            id: item.Book.id,
-            name: item.Book.name,
-            author_id: item.Book.author_id,
-            year: item.Book.year,
-            page: item.Book.page,
-            books: item.Book.books,
-            book_count: item.Book.book_count,
-            description: item.Book.description,
-            image_id: item.Book.image_id,
-            createdAt: item.Book.createdAt,
-            updatedAt: item.Book.updatedAt,
-            auther_id: item.Book.auther_id,
-            Auther: item.Book.Auther,
-            image: item.Book.image,
-            bookItem: item,
-          }))
-          setBooks(enrichedBooks)
-          cachedBooks = enrichedBooks // Cache the fetched data
-        } catch (err) {
-          console.error("Kitoblarni olishda xatolik:", err)
-          setBooks([])
-        } finally {
-          setIsLoading(false)
-        }
-      }
-
-      // Fetch swiper books
-      if (cachedSwiperBooks) {
-        setSwiperBooks(cachedSwiperBooks)
-      } else {
-        try {
-          const swiperResponse = (await getBooks()) as any
-          const parsedSwiperBooks: BookData[] = Array.isArray(swiperResponse.data)
-            ? swiperResponse.data
-            : [swiperResponse.data]
-          setSwiperBooks(parsedSwiperBooks)
-          cachedSwiperBooks = parsedSwiperBooks // Cache the fetched data
-        } catch (error) {
-          console.error("Swiper kitoblarini olishda xatolik:", error)
-          setSwiperBooks([])
-        }
+        // Other types of errors
+        setIsLoading(false)
       }
     }
-    fetchAllData()
-  }, []) // Empty dependency array means it runs once on mount
+  }
+
+  // Main data fetching function
+  const fetchAllData = async () => {
+    // Fetch main books
+    if (cachedBooks) {
+      setBooks(cachedBooks)
+      setIsLoading(false)
+    } else {
+      setIsLoading(true)
+      try {
+        const response = (await getBookItems()) as any
+        const bookItemsData = response.data || []
+        const enrichedBooks: EnrichedBook[] = bookItemsData.map((item: any) => ({
+          id: item.Book.id,
+          name: item.Book.name,
+          author_id: item.Book.author_id,
+          year: item.Book.year,
+          page: item.Book.page,
+          books: item.Book.books,
+          book_count: item.Book.book_count,
+          description: item.Book.description,
+          image_id: item.Book.image_id,
+          createdAt: item.Book.createdAt,
+          updatedAt: item.Book.updatedAt,
+          auther_id: item.Book.auther_id,
+          Auther: item.Book.Auther,
+          image: item.Book.image,
+          bookItem: item,
+        }))
+        setBooks(enrichedBooks)
+        cachedBooks = enrichedBooks
+      } catch (err) {
+        throw err // Re-throw to be caught by checkNetworkAndFetch
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    // Fetch swiper books
+    if (cachedSwiperBooks) {
+      setSwiperBooks(cachedSwiperBooks)
+    } else {
+      try {
+        const swiperResponse = (await getBooks()) as any
+        const parsedSwiperBooks: BookData[] = Array.isArray(swiperResponse.data)
+          ? swiperResponse.data
+          : [swiperResponse.data]
+        setSwiperBooks(parsedSwiperBooks)
+        cachedSwiperBooks = parsedSwiperBooks
+      } catch (error) {
+        console.error("Swiper kitoblarini olishda xatolik:", error)
+        setSwiperBooks([])
+      }
+    }
+  }
+
+  // Effect to fetch books with network error handling
+  useEffect(() => {
+    checkNetworkAndFetch()
+  }, [])
 
   useEffect(() => {
     setIsClient(true)
@@ -316,6 +352,7 @@ export default function HomePage() {
   }, [books])
 
   const totalPages = Math.ceil(repeatedBooks.length / itemsPerPage)
+
   const currentBooks = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage
     return repeatedBooks.slice(startIndex, startIndex + itemsPerPage)
@@ -359,6 +396,7 @@ export default function HomePage() {
         pages.push(totalPages)
       }
     }
+
     return pages
   }
 
@@ -369,7 +407,17 @@ export default function HomePage() {
     }
   }
 
+  const handleNetworkRetry = () => {
+    setIsLoading(true)
+    checkNetworkAndFetch()
+  }
+
   if (!isClient) return null
+
+  // Show network error screen
+  if (showNetworkError) {
+    return <NetworkError onRetry={handleNetworkRetry} isVisible={showNetworkError} />
+  }
 
   // Show welcome screen only if user hasn't seen it in current session
   if (showWelcomeScreen) {
@@ -380,13 +428,10 @@ export default function HomePage() {
     <div className="min-h-screen bg-background mt-10">
       {/* Swiperga yuklangan kitoblarni prop orqali uzatamiz */}
       <BookSwiper initialBooks={swiperBooks} />
+
       <div className="container mx-auto px-4 py-8">
         <div className="w-full px-10 py-8 text-start">
-          {!isLoading && (
-            <h1
-              className="text-[38px] font-[700] text-[#21466D]"
-            >{t("common.allBooks")}</h1>
-          )}
+          {!isLoading && <h1 className="text-[38px] font-[700] text-[#21466D]">{t("common.allBooks")}</h1>}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 max-md:gap-4">
@@ -472,6 +517,7 @@ export default function HomePage() {
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               </MagnetButton>
+
               {getPaginationButtons(currentPage, totalPages).map((page, index) => (
                 <React.Fragment key={index}>
                   {page === "..." ? (
@@ -493,6 +539,7 @@ export default function HomePage() {
                   )}
                 </React.Fragment>
               ))}
+
               <MagnetButton>
                 <Button
                   onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
@@ -507,6 +554,7 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
       <ScrollToTopButton />
     </div>
   )

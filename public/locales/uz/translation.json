@@ -1,5 +1,13 @@
 {
   "common": {
+    "wifi":"WiFi yoki mobil internetni tekshiring",
+    "router":"Router yoki modemni qayta ishga tushiring",
+    "sayt":"Boshqa saytlar ochilishini tekshiring",
+    "noInternet":"Internet aloqasi mavjud emas",
+    "checkConnection":"Bog'lanishni tekshiring",
+    "retry":"Qayta urinib ko'ring",
+    "retrying":"Ulanmoqda",
+    "connectionTips":"Ulanish bo'yicha maslahatlar",
     "newBooks":"Yangi kitoblar",
     "allBooks":"Barcha kitoblar",
     "usat":"USAT kutubxonasiga xush kelibsiz",

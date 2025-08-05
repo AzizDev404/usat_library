@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Autoplay } from "swiper/modules"
@@ -15,6 +16,7 @@ import { motion } from "framer-motion"
 
 // Swiper stillarini import qilamiz (faqat asosiy stillar)
 import "swiper/css"
+
 // Shadcn/ui komponentlarini import qilamiz
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -46,6 +48,13 @@ const SwiperCardSkeleton = () => (
   </Card>
 )
 
+// Title skeleton component
+const TitleSkeleton = () => (
+  <div className="container mx-auto px-10 py-8 text-start">
+    <div className="h-12 bg-gray-200 rounded w-64 animate-pulse"></div>
+  </div>
+)
+
 export default function Swipper({ initialBooks }: SwipperProps) {
   const { t, i18n } = useTranslation()
   const router = useRouter()
@@ -62,7 +71,7 @@ export default function Swipper({ initialBooks }: SwipperProps) {
         return
       }
 
-      // Agar initialBooks bo'sh bo'lsa, API dan ma'lumot yuklaymiz
+      // Agar initialBooks bo'sh bo'lsa, API dan ma'lumot yuklayamiz
       try {
         setLoading(true)
         const booksResponse = (await getBooks()) as any
@@ -70,12 +79,12 @@ export default function Swipper({ initialBooks }: SwipperProps) {
         setBooks(parsedBooks)
       } catch (error) {
         console.error("Ma'lumotlarni olishda xatolik:", error)
-        toast.error(t("common.errorFetchingData"))
         setBooks([]) // Xatolik bo'lsa bo'sh array o'rnatamiz
       } finally {
         setLoading(false)
       }
     }
+
     fetchData()
   }, [initialBooks, t]) // initialBooks o'zgarganda qayta ishga tushadi
 
@@ -118,9 +127,15 @@ export default function Swipper({ initialBooks }: SwipperProps) {
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="md:w-[1800px] mx-auto"
       >
-        <div className="container mx-auto px-10 py-8 text-start">
-          <h1 className="text-[38px] font-[700] text-[#21466D]">{t("common.newBooks")}</h1>
-        </div>
+        {/* Title with loading state */}
+        {loading ? (
+          <TitleSkeleton />
+        ) : (
+          <div className="container mx-auto px-10 py-8 text-start">
+            <h1 className="text-[38px] font-[700] text-[#21466D]">{t("common.newBooks")}</h1>
+          </div>
+        )}
+
         <Swiper
           slidesPerView={1}
           spaceBetween={10}
@@ -169,7 +184,7 @@ export default function Swipper({ initialBooks }: SwipperProps) {
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.5, ease: "easeOut" }}
+                      transition={{ duration: 0.5, ease: "easeIn" }}
                     >
                       <Card
                         onClick={() => isTokenyes(() => handleCardClick(book.Book.id))}
@@ -181,6 +196,7 @@ export default function Swipper({ initialBooks }: SwipperProps) {
                               src={
                                 getFullImageUrl(book.Book.image?.url) ||
                                 "/placeholder.svg?height=350&width=250&query=book cover" ||
+                                "/placeholder.svg" ||
                                 "/placeholder.svg"
                               }
                               alt={book.Book.name}
@@ -236,6 +252,7 @@ export default function Swipper({ initialBooks }: SwipperProps) {
               })}
         </Swiper>
       </motion.div>
+
       <style jsx global>{`
         .book-swiper {
           padding: 0 !important;
