@@ -325,16 +325,16 @@ export default function Navbar() {
 
           {/* Mobile Search Icon */}
           <div className="md:hidden">
-            <MagnetButton >
+            <MagnetButton>
               <Button onClick={toggleMobileSearch} className="text-[#21466D]">
-                <Search className="w-16" />
+                <Search className="w-5 h-5" />
               </Button>
             </MagnetButton>
           </div>
 
           {/* Desktop Katalog Button - Hidden on mobile */}
           <Link href="/filter" className="mr-5 hidden md:block">
-            <MagnetButton >
+            <MagnetButton>
               <Button
                 className="px-8 py-6 text-white hover:!bg-white hover:text-[#21466D]"
                 style={{ border: "1px solid ", backgroundColor: "#21466D" }}
@@ -350,7 +350,7 @@ export default function Navbar() {
             {token ? (
               <>
                 <Link href="/cart">
-                  <MagnetButton >
+                  <MagnetButton>
                     <Button
                       variant="outline"
                       size="sm"
@@ -368,13 +368,13 @@ export default function Navbar() {
                   </MagnetButton>
                 </Link>
                 <Link href="/profile">
-                  <MagnetButton >
+                  <MagnetButton>
                     <Button
                       variant="outline"
                       style={{ border: "1px solid #21466D", backgroundColor: "transparent" }}
                       className="rounded-full flex w-[50px] h-[50px] text-[30px] hover:text-[white] flex-col justify-center items-center hover:!bg-[#21466D] hover:border-transparent transition-all duration-300 bg-transparent"
                     >
-                      <User className="w-20" />
+                      <User className="w-5 h-5" />
                     </Button>
                   </MagnetButton>
                 </Link>
@@ -457,95 +457,111 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* Mobile Navigation */}
-      <div className="fixed bottom-0 z-50 w-full bg-background border-t md:hidden flex items-center h-16 px-2">
-        <Link href="/" className="flex-1 px-1">
-          <MagnetButton >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
-            >
-              <BookAIcon />
-              <span className="text-xs font-semibold">{t("common.books")}</span>
-            </Button>
-          </MagnetButton>
-        </Link>
-
-        <Link href="/filter" className="flex-1 px-1">
-          <MagnetButton >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
-            >
-              <Layers className="h-5 w-5" />
-              <span className="text-xs font-semibold">{t("common.catalog")}</span>
-            </Button>
-          </MagnetButton>
-        </Link>
-
-        <Link href="/cart" className="flex-1 px-1 relative">
-          <MagnetButton >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
-            >
-              <ShoppingCart className="h-5 w-5" />
-              <span>{t("common.cart")}</span>
-            </Button>
-            {cartCount > 0 && (
-              <Badge className="absolute top-1 right-2 h-5 w-5 p-0 text-xs flex justify-center items-center primary-gradient">
-                {cartCount}
-              </Badge>
-            )}
-          </MagnetButton>
-        </Link>
-
-        {token ? (
-          <>
-            <Link href="/profile" className="flex-1 px-1">
-              <MagnetButton >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
-                >
-                  <User className="h-5 w-5" />
-                  <span>{t("common.profile")}</span>
-                </Button>
-              </MagnetButton>
-            </Link>
-            <div className="flex-1 px-1">
-              <MagnetButton >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="flex flex-col w-full items-center justify-center text-xs text-red-500 hover:bg-red-50 transition"
-                  onClick={() => confirmLogout()}
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span>{t("common.logout")}</span>
-                </Button>
-              </MagnetButton>
-            </div>
-          </>
-        ) : (
-          <Link href="/login" className="flex-1 px-1">
-            <MagnetButton >
+      {/* Mobile Navigation - Fixed and Improved */}
+      <div className="fixed bottom-0 z-50 w-full bg-background border-t md:hidden">
+        <div className="flex items-center justify-around h-16 px-2 safe-area-pb">
+          {/* Home/Books */}
+          <Link href="/" className="flex-1 max-w-[80px]">
+            <MagnetButton>
               <Button
                 variant="ghost"
-                size="icon"
-                className="flex flex-col w-full items-center justify-center text-xs hover:bg-accent transition"
+                className="flex flex-col items-center justify-center w-full h-full p-1 text-xs hover:bg-accent transition rounded-lg"
               >
-                <LogIn className="h-5 w-5" />
-                <span>{t("common.login")}</span>
+                <BookAIcon className="w-5 h-5 mb-1" />
+                <span className="text-[10px] font-medium leading-none">{t("common.books")}</span>
               </Button>
             </MagnetButton>
           </Link>
-        )}
+
+          {/* Catalog */}
+          <Link href="/filter" className="flex-1 max-w-[80px]">
+            <MagnetButton>
+              <Button
+                variant="ghost"
+                className="flex flex-col items-center justify-center w-full h-full p-1 text-xs hover:bg-accent transition rounded-lg"
+              >
+                <Layers className="w-5 h-5 mb-1" />
+                <span className="text-[10px] font-medium leading-none">{t("common.catalog")}</span>
+              </Button>
+            </MagnetButton>
+          </Link>
+
+          {/* Cart */}
+          <Link href="/cart" className="flex-1 max-w-[80px] relative">
+            <MagnetButton>
+              <Button
+                variant="ghost"
+                className="flex flex-col items-center justify-center w-full h-full p-1 text-xs hover:bg-accent transition rounded-lg"
+              >
+                <div className="relative">
+                  <ShoppingCart className="w-5 h-5 mb-1" />
+                  {cartCount > 0 && (
+                    <Badge className="absolute -top-2 -right-2 h-4 w-4 p-0 text-[10px] flex justify-center items-center primary-gradient">
+                      {cartCount > 9 ? '9+' : cartCount}
+                    </Badge>
+                  )}
+                </div>
+                <span className="text-[10px] font-medium leading-none">{t("common.cart")}</span>
+              </Button>
+            </MagnetButton>
+          </Link>
+
+          {/* Profile or Login */}
+          {token ? (
+            <>
+              <Link href="/profile" className="flex-1 max-w-[80px]">
+                <MagnetButton>
+                  <Button
+                    variant="ghost"
+                    className="flex flex-col items-center justify-center w-full h-full p-1 text-xs hover:bg-accent transition rounded-lg"
+                  >
+                    <User className="w-5 h-5 mb-1" />
+                    <span className="text-[10px] font-medium leading-none">{t("common.profile")}</span>
+                  </Button>
+                </MagnetButton>
+              </Link>
+              
+              {/* Logout */}
+              <div className="flex-1 max-w-[80px]">
+                <MagnetButton>
+                  <Button
+                    variant="ghost"
+                    className="flex flex-col items-center justify-center w-full h-full p-1 text-xs text-red-500 hover:bg-red-50 transition rounded-lg"
+                    onClick={() => confirmLogout()}
+                  >
+                    <LogOut className="w-5 h-5 mb-1" />
+                    <span className="text-[10px] font-medium leading-none">{t("common.logout")}</span>
+                  </Button>
+                </MagnetButton>
+              </div>
+            </>
+          ) : (
+            <Link href="/login" className="flex-1 max-w-[80px]">
+              <MagnetButton>
+                <Button
+                  variant="ghost"
+                  className="flex flex-col items-center justify-center w-full h-full p-1 text-xs hover:bg-accent transition rounded-lg"
+                >
+                  <LogIn className="w-5 h-5 mb-1" />
+                  <span className="text-[10px] font-medium leading-none">{t("common.login")}</span>
+                </Button>
+              </MagnetButton>
+            </Link>
+          )}
+        </div>
       </div>
+
+      {/* Add bottom padding to body content to prevent overlap with fixed navbar */}
+      <style jsx global>{`
+        @media (max-width: 768px) {
+          body {
+            padding-bottom: 64px;
+          }
+        }
+        .safe-area-pb {
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+      `}</style>
     </>
   )
 }
